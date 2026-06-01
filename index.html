@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Video2Sim2Real: Learning Generalizable Dexterity from a Single Human Manipulation Video</title>
+
+	<meta name="description" content="A full-stack framework for autonomous dexterous skill acquisition from a single human manipulation video, via a video-to-sim-to-real pipeline.">
+
+	<!-- Open Graph / link-preview tags. Kept anonymous for double-blind review. -->
+	<meta property="og:type" content="website">
+	<meta property="og:title" content="Video2Sim2Real">
+	<meta property="og:description" content="Full-Stack Autonomous Dexterous Acquisition from a Single Human Video.">
+	<!-- EDIT (after deploy, if anonymity allows): set the public URL + a 1200x630 preview image -->
+	<meta property="og:url" content="">
+	<meta property="og:image" content="images/teaser.png">
+
+	<!-- Favicon (optional): drop a square PNG at images/favicon.png -->
+	<link rel="icon" href="images/favicon.png" type="image/png">
+
+	<!-- Icon fonts for the link buttons -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+	<!-- The template's stylesheet (HTML5 UP "Strata", trimmed + de-branded) -->
+	<link rel="stylesheet" href="assets/main.css">
+
+	<!-- ===== Small style block layered on top of the template ===== -->
+	<style>
+		:root { --accent: #2b6cb0; }            /* EDIT: your accent colour */
+
+		/* Hero (sits on the dark full-screen header) */
+		header h1 { margin-top: 0; margin-bottom: 0.25em; font-size: 4em; line-height: 1.1; }
+		header .subtitle    { color: rgba(255,255,255,0.92); font-size: 1.5em; font-weight: 400; max-width: none; margin: 0 auto 1.1em; line-height: 1.35; white-space: nowrap; }
+		header .authors     { color: #fff; font-size: 1.25em; line-height: 1.7; max-width: 44em; margin: 0 auto 0.35em; }
+		header .authors a   { color: #fff; text-decoration: underline; text-underline-offset: 2px; }
+		header .affiliations{ color: rgba(255,255,255,0.85); font-size: 1.05em; margin-bottom: 1.4em; }
+		header .venue       { color: rgba(255,255,255,0.92); font-size: 1.25em; font-weight: 600; margin-top: 1.4em; }
+
+		/* Hero link buttons (independent of the template's quirky .button rule) */
+		.hero-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6em; margin: 0.4em auto 0; max-width: 46em; padding: 0; }
+		.hero-links a { display: inline-flex; align-items: center; gap: 0.5em; padding: 0.55em 1.15em; border: 2px solid rgba(255,255,255,0.85); border-radius: 7px; color: #fff; background: rgba(0,0,0,0.28); font-size: 1.05em; font-weight: 600; transition: background 0.2s, color 0.2s; }
+		.hero-links a:hover  { background: rgba(255,255,255,0.95); color: #11161d; }
+
+		/* Content niceties */
+		main#main-content h2 { color: var(--accent); }
+		.caption { font-size: 0.9em; color: #555; text-align: center; margin-top: 0.5em; }
+		.site-footer { text-align: center; color: #9aa6b2; font-size: 0.8em; padding: 1.5em 0 2.5em; }
+		.site-footer a { color: #9aa6b2; }
+
+		/* Make the float-based grids stack on phones */
+		@media screen and (max-width: 736px) {
+			.row > * { width: 100% !important; }
+			header h1 { font-size: 2.5em; }
+			header .subtitle { font-size: 1.2em; white-space: normal; }
+		}
+	</style>
+</head>
+
+<body id="top">
+
+	<!-- ============================ HERO ============================ -->
+	<!-- Background image: drop yours at images/header_bg.jpg (configured in     -->
+	<!-- assets/main.css under the `header {}` rule). Without it you get a clean -->
+	<!-- dark hero, so the page looks intentional until you add one.            -->
+	<header>
+		<h1 id="header-top">Video2Sim2Real</h1>
+		<p class="subtitle">Full-Stack Autonomous Dexterous Acquisition from a Single Human Video</p>
+
+		<!-- Double-blind review: author + affiliation info intentionally withheld. -->
+		<p class="authors">Anonymous Author(s)</p>
+		<p class="affiliations">Paper under double-blind review</p>
+
+		<!-- Link buttons. For a blind submission, use ANONYMIZED links only -->
+		<!-- (e.g. an OpenReview PDF, an anonymous.4open.science code mirror).    -->
+		<!-- Set each href, or delete the buttons you don't need.                -->
+		<nav class="hero-links">
+			<a href="#"><i class="fas fa-file-pdf"></i>&nbsp;Paper</a>
+			<a href="#"><i class="fas fa-video"></i>&nbsp;Video</a>
+			<a href="#"><i class="fas fa-code"></i>&nbsp;Code</a>
+		</nav>
+
+		<p class="venue">Under Review</p>
+	</header>
+
+	<!-- ========================== CONTENT ========================== -->
+	<main id="main-content">
+		<div style="padding-top: 4em; padding-bottom: 1em; width: min(62em, 92%); margin-left: auto; margin-right: auto;">
+			<section>
+
+				<!-- ----------------------- ABSTRACT ----------------------- -->
+				<p>
+					<b style="font-weight:900;">Abstract.</b>
+					Human manipulation videos are a convenient and intuitive source for robot learning.
+					However, directly transferring human dexterity to robots remains challenging due to
+					perception errors and embodiment gap. To address this, we introduce
+					<b style="font-weight:900;">Video2Sim2Real</b>, a full-stack framework for autonomous
+					skill acquisition from a single human manipulation video. Our framework first uses
+					off-the-shelf foundation models to reconstruct a simulator-ready digital twin and
+					extract robot and object motion priors. Rather than treating the extracted robot motion
+					as a reliable reference throughout execution, our key idea is to recover and leverage the
+					most fundamental sources of supervision from the demonstrated skill: we identify
+					object-centric keyframes to optimize the corresponding robot configurations using object
+					information from the simulator, and use these configurations as anchors that refine the
+					robot motion such that it ultimately has the desired impact on the environment. To bridge
+					the remaining sim-to-real gap, we introduce a sim-to-real strategy that decouples
+					robustness to noisy and incomplete perception from variations in hand-object interaction
+					dynamics. Specifically, we learn to recalibrate robot configurations from noisy
+					real-world point clouds via IL, and leverage residual RL to perform local finger-level
+					adaptations to ensure for robust and effective interactions. Finally, a collision-aware
+					motion planning module enables spatial generalization to novel object configurations.
+					Across several everyday manipulation tasks, Video2Sim2Real improves simulated task
+					success, safety, and trajectory coherence over numerous baselines, and achieves better
+					sim-to-real transfer than existing techniques. These results demonstrate a promising path
+					toward autonomous dexterous skill acquisition from human videos.
+				</p>
+
+				<!-- Teaser. Swap the placeholder for an <img> or a <video>:            -->
+				<!--   image: <img class="image fit" src="images/teaser.png" alt="">     -->
+				<!--   video: <video autoplay muted loop playsinline style="width:100%;" -->
+				<!--            preload="metadata"><source src="videos/teaser.mp4"        -->
+				<!--            type="video/mp4"></video>                                  -->
+				<span class="image fit"><img src="assets/images/placeholder.svg" alt="Teaser placeholder"></span>
+
+				<hr style="margin-top: 1em;">
+
+				<!-- ------------------------ METHOD ------------------------ -->
+				<!-- EDIT: this is paraphrased from your abstract as a starting point. -->
+				<h2>Method</h2>
+				<p>
+					Video2Sim2Real is a full-stack framework that turns a <b>single</b> human manipulation
+					video into a deployable robot skill. It first uses off-the-shelf foundation models to
+					reconstruct a simulator-ready digital twin and to extract robot and object motion priors.
+					Rather than trusting the extracted robot motion as a fixed reference, it identifies
+					object-centric keyframes and optimizes the corresponding robot configurations from the
+					simulator's object information; these configurations then act as anchors that refine the
+					full robot motion so that it has the intended effect on the environment.
+				</p>
+				<p>
+					To close the sim-to-real gap, a decoupled strategy separates robustness to noisy,
+					incomplete perception from variation in hand&ndash;object interaction dynamics: imitation
+					learning recalibrates robot configurations from noisy real-world point clouds, while
+					residual reinforcement learning performs local finger-level adaptation for robust
+					interaction. A collision-aware motion planner adds spatial generalization to novel object
+					configurations.
+				</p>
+				<!-- Drop your pipeline/architecture figure here (replace the placeholder). -->
+				<span class="image fit"><img src="assets/images/placeholder.svg" alt="Method figure placeholder"></span>
+
+				<hr style="margin-top: 1em;">
+
+				<!-- ------------------------ RESULTS ----------------------- -->
+				<h2>Results</h2>
+				<p>
+					Across several everyday manipulation tasks, Video2Sim2Real improves simulated task
+					success, safety, and trajectory coherence over a range of baselines, and transfers to the
+					real world more reliably than prior techniques. The clips below show the learned skills.
+					<!-- EDIT: adjust this summary and drop your result videos into the grid. -->
+				</p>
+				<div class="box alt" style="margin-bottom: 1em;">
+					<div class="row 50% uniform" style="width: 100%;">
+						<!-- For each cell, swap the placeholder for: -->
+						<!-- <video autoplay loop muted playsinline style="width:100%;" preload="metadata"><source src="videos/task1.mp4" type="video/mp4"></video> -->
+						<div style="width: 33.33%; text-align: center;">
+							<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+							<div class="caption">Task 1</div>
+						</div>
+						<div style="width: 33.33%; text-align: center;">
+							<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+							<div class="caption">Task 2</div>
+						</div>
+						<div style="width: 33.33%; text-align: center;">
+							<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+							<div class="caption">Task 3</div>
+						</div>
+					</div>
+				</div>
+
+				<hr style="margin-top: 1em;">
+
+				<!-- ------------------------ BIBTEX ------------------------ -->
+				<!-- Kept anonymous for review. EDIT for the camera-ready once de-anonymized. -->
+				<h2>BibTeX</h2>
+				<pre><code>@article{video2sim2real,
+  title   = {Video2Sim2Real: Learning Generalizable Dexterity
+             from a Single Human Manipulation Video},
+  author  = {Anonymous Author(s)},
+  journal = {Under review},
+  year    = {2026}
+}</code></pre>
+
+			</section>
+		</div>
+
+		<!-- Template attribution (HTML5 UP, CCA 3.0). Reveals no author info. -->
+		<footer class="site-footer">
+			Built with the <a href="https://html5up.net/strata">HTML5 UP &ldquo;Strata&rdquo;</a> template.
+		</footer>
+	</main>
+
+	<!-- Template scripts (jQuery + skel responsive framework + helpers). -->
+	<!-- Google Analytics and the empty dp3.js were intentionally removed.  -->
+	<script src="assets/jquery.min.js"></script>
+	<script src="assets/jquery.poptrox.min.js"></script>
+	<script src="assets/skel.min.js"></script>
+	<script src="assets/util.js"></script>
+	<script src="assets/main.js"></script>
+</body>
+</html>

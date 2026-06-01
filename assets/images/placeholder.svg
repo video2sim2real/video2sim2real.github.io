@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Media placeholder">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e9eef3"/>
+      <stop offset="1" stop-color="#cdd8e4"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#g)"/>
+  <rect x="2" y="2" width="1596" height="896" fill="none" stroke="#9fb0c2" stroke-width="3" stroke-dasharray="14 12"/>
+  <g fill="#7b8a9a" font-family="'Source Sans Pro', Arial, sans-serif" text-anchor="middle">
+    <text x="800" y="430" font-size="70" font-weight="700">MEDIA PLACEHOLDER</text>
+    <text x="800" y="510" font-size="34">Swap for your image or video — see the comment in index.html</text>
+  </g>
+</svg>
