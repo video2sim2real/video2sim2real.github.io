@@ -3151,33 +3151,21 @@
 
 
 header {
-	background-color: #11161d;
-
-	background-image: linear-gradient(
-		rgba(0, 0, 0, 0.3), /* dark overlay so the title stays legible */
-		rgba(0, 0, 0, 0.3) /* raise these alphas to darken the hero image */
-	), url('../images/header_bg.jpg');
-
-
-    height: 100vh;
-    background-size: cover;
-    background-position: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+	/* White hero, no background image. (Text colours live in index.html's <style>.) */
+	background: #ffffff;
+	padding: 4.5em 1.5em 3.5em;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	text-align: center;
+	border-bottom: 1px solid #e6e9ee;
 }
 
 
 header h1 {
-    margin-bottom: 20px; /* 标题与按钮之间的间距 */
+	/* Hero title size/colour are set in index.html's <style> block. */
 	font-size: 4.5em;
-	/* color: #ffffff; */
-	/* 设置标题颜色为半透明 */
-	color: rgba(255, 255, 255, 0.9);
-    /* 设置标题位置 */
-	/* margin-top: 670px; */
-	margin-top: 170px;
 }
 
 .buttons {

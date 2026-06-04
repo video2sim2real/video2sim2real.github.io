@@ -30,30 +30,52 @@
 	<style>
 		:root { --accent: #2b6cb0; }            /* EDIT: your accent colour */
 
-		/* Hero (sits on the dark full-screen header) */
-		header h1 { margin-top: 0; margin-bottom: 0.25em; font-size: 4em; line-height: 1.1; }
-		header .subtitle    { color: rgba(255,255,255,0.92); font-size: 1.5em; font-weight: 400; max-width: none; margin: 0 auto 1.1em; line-height: 1.35; white-space: nowrap; }
-		header .authors     { color: #fff; font-size: 1.25em; line-height: 1.7; max-width: 44em; margin: 0 auto 0.35em; }
-		header .authors a   { color: #fff; text-decoration: underline; text-underline-offset: 2px; }
-		header .affiliations{ color: rgba(255,255,255,0.85); font-size: 1.05em; margin-bottom: 1.4em; }
-		header .venue       { color: rgba(255,255,255,0.92); font-size: 1.25em; font-weight: 600; margin-top: 1.4em; }
+		/* Hero (white header, blue title) */
+		header h1 { margin-top: 0; margin-bottom: 0.25em; font-size: 4em; line-height: 1.1; color: #1a4f8a; }
+		header .subtitle    { color: var(--accent); font-size: 1.5em; font-weight: 400; max-width: none; margin: 0 auto 1.1em; line-height: 1.35; white-space: nowrap; }
+		header .authors     { color: #374151; font-size: 1.25em; line-height: 1.7; max-width: 44em; margin: 0 auto 0.35em; }
+		header .authors a   { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+		header .affiliations{ color: #6b7280; font-size: 1.05em; margin-bottom: 1.4em; }
+		header .venue       { color: var(--accent); font-size: 1.25em; font-weight: 600; margin-top: 1.4em; }
 
-		/* Hero link buttons (independent of the template's quirky .button rule) */
+		/* Hero link buttons (outlined blue on white; fill on hover) */
 		.hero-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6em; margin: 0.4em auto 0; max-width: 46em; padding: 0; }
-		.hero-links a { display: inline-flex; align-items: center; gap: 0.5em; padding: 0.55em 1.15em; border: 2px solid rgba(255,255,255,0.85); border-radius: 7px; color: #fff; background: rgba(0,0,0,0.28); font-size: 1.05em; font-weight: 600; transition: background 0.2s, color 0.2s; }
-		.hero-links a:hover  { background: rgba(255,255,255,0.95); color: #11161d; }
+		.hero-links a { display: inline-flex; align-items: center; gap: 0.5em; padding: 0.55em 1.15em; border: 2px solid var(--accent); border-radius: 7px; color: var(--accent); background: #fff; font-size: 1.05em; font-weight: 600; transition: background 0.2s, color 0.2s; }
+		.hero-links a:hover  { background: var(--accent); color: #fff; }
 
 		/* Content niceties */
-		main#main-content h2 { color: var(--accent); }
-		.caption { font-size: 0.9em; color: #555; text-align: center; margin-top: 0.5em; }
+		main#main-content h2 { color: var(--accent); margin-bottom: 0.4em; }
+		main#main-content figure { margin: 1.2em 0; }
+		.caption, .media-grid figcaption { font-size: 0.9em; color: #555; text-align: center; margin-top: 0.5em; }
+		.section-lead { font-size: 1.18em; color: #2d3748; text-align: center; max-width: 42em; margin: 0 auto 1.3em; line-height: 1.5; }
+		.section-sub  { color: #718096; font-weight: 600; text-align: center; letter-spacing: 0.03em; margin: -0.2em auto 1.2em; }
+
+		/* Demo block right under the hero */
+		.demo-block { margin: 0 auto 1.5em; }
+
+		/* Responsive grids of figure/video placeholders */
+		.media-grid { display: grid; gap: 1em; margin: 1.2em 0; }
+		.media-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+		.media-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+		.media-grid figure { margin: 0; }
+
+		/* Hover-to-switch task selector (move the mouse over a task — no clicking) */
+		.video-tabs { margin: 1.2em 0; }
+		.tab-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 1.3em; margin-bottom: 1em; border-bottom: 1px solid #e2e8f0; }
+		.tab-btn { padding: 0.45em 0.15em; margin-bottom: -1px; border-bottom: 3px solid transparent; color: #4a5568; font-weight: 600; font-size: 0.98em; cursor: pointer; user-select: none; transition: color 0.15s, border-color 0.15s; }
+		.tab-btn:hover, .tab-btn.is-active { color: var(--accent); border-bottom-color: var(--accent); }
+		.tab-panel { display: none; margin: 0; }
+		.tab-panel.is-active { display: block; }
+
 		.site-footer { text-align: center; color: #9aa6b2; font-size: 0.8em; padding: 1.5em 0 2.5em; }
 		.site-footer a { color: #9aa6b2; }
 
-		/* Make the float-based grids stack on phones */
+		/* Make the grids stack on phones */
 		@media screen and (max-width: 736px) {
 			.row > * { width: 100% !important; }
 			header h1 { font-size: 2.5em; }
 			header .subtitle { font-size: 1.2em; white-space: normal; }
+			.media-grid.cols-2, .media-grid.cols-3 { grid-template-columns: 1fr; }
 		}
 	</style>
 </head>
@@ -61,9 +83,9 @@
 <body id="top">
 
 	<!-- ============================ HERO ============================ -->
-	<!-- Background image: drop yours at images/header_bg.jpg (configured in     -->
-	<!-- assets/main.css under the `header {}` rule). Without it you get a clean -->
-	<!-- dark hero, so the page looks intentional until you add one.            -->
+	<!-- White hero with a blue title (no background image). Colours are in the  -->
+	<!-- <style> block above; the white background is the `header {}` rule in     -->
+	<!-- assets/main.css.                                                         -->
 	<header>
 		<h1 id="header-top">Video2Sim2Real</h1>
 		<p class="subtitle">Full-Stack Autonomous Dexterous Acquisition from a Single Human Video</p>
@@ -86,10 +108,19 @@
 
 	<!-- ========================== CONTENT ========================== -->
 	<main id="main-content">
-		<div style="padding-top: 4em; padding-bottom: 1em; width: min(62em, 92%); margin-left: auto; margin-right: auto;">
-			<section>
+		<div style="padding-top: 3em; padding-bottom: 1em; width: min(62em, 92%); margin-left: auto; margin-right: auto;">
 
-				<!-- ----------------------- ABSTRACT ----------------------- -->
+			<!-- =========================== DEMO =========================== -->
+			<!-- Headline demo, right under the title. Swap the placeholder for a video:        -->
+			<!--   <video autoplay muted loop playsinline controls style="width:100%;"          -->
+			<!--          preload="metadata"><source src="videos/demo.mp4" type="video/mp4"></video> -->
+			<section id="demo" class="demo-block">
+				<span class="image fit"><img src="assets/images/placeholder.svg" alt="Demo video placeholder"></span>
+				<div class="caption">Demo</div>
+			</section>
+
+			<!-- ----------------------- ABSTRACT ----------------------- -->
+			<section id="abstract">
 				<p>
 					<b style="font-weight:900;">Abstract.</b>
 					Human manipulation videos are a convenient and intuitive source for robot learning.
@@ -115,72 +146,162 @@
 					sim-to-real transfer than existing techniques. These results demonstrate a promising path
 					toward autonomous dexterous skill acquisition from human videos.
 				</p>
+			</section>
 
-				<!-- Teaser. Swap the placeholder for an <img> or a <video>:            -->
-				<!--   image: <img class="image fit" src="images/teaser.png" alt="">     -->
-				<!--   video: <video autoplay muted loop playsinline style="width:100%;" -->
-				<!--            preload="metadata"><source src="videos/teaser.mp4"        -->
-				<!--            type="video/mp4"></video>                                  -->
-				<span class="image fit"><img src="assets/images/placeholder.svg" alt="Teaser placeholder"></span>
+			<hr style="margin-top: 1em;">
 
-				<hr style="margin-top: 1em;">
+			<!-- ---------------------- 1. AUTONOMOUS ---------------------- -->
+			<section id="autonomous">
+				<h2>Autonomous</h2>
+				<p class="section-lead">
+					Acquire dexterous skills from a <b>single</b> human manipulation video &mdash;
+					without robot demonstrations or expert intervention.
+				</p>
 
-				<!-- ------------------------ METHOD ------------------------ -->
-				<!-- EDIT: this is paraphrased from your abstract as a starting point. -->
+				<!-- Teaser figure. Swap the placeholder for your <img> or <video>:                  -->
+				<!--   image: <img class="image fit" src="images/teaser.png" alt="">                  -->
+				<!--   video: <video autoplay muted loop playsinline style="width:100%;"              -->
+				<!--            preload="metadata"><source src="videos/teaser.mp4" type="video/mp4"></video> -->
+				<figure>
+					<span class="image fit"><img src="assets/images/placeholder.svg" alt="Teaser figure placeholder"></span>
+					<figcaption class="caption">Teaser &mdash; from one human video to an autonomous robot skill.</figcaption>
+				</figure>
+
+				<!-- Lifestyle / in-the-wild clips, one per task. Hover a Task label to switch    -->
+				<!-- to its clip, so the seven videos don't share one row. Swap each panel's      -->
+				<!-- placeholder for:                                                             -->
+				<!--   <video autoplay muted loop playsinline style="width:100%;"                 -->
+				<!--     preload="metadata"><source src="videos/lifestyle1.mp4" type="video/mp4"></video> -->
+				<div class="video-tabs" data-tabs>
+					<div class="tab-buttons">
+						<span class="tab-btn is-active" data-tab="0">Apple Preparing</span>
+						<span class="tab-btn" data-tab="1">Peach Preparing</span>
+						<span class="tab-btn" data-tab="2">Steak Seasoning</span>
+						<span class="tab-btn" data-tab="3">Toy Arrangement</span>
+						<span class="tab-btn" data-tab="4">Tissue Box Sharing</span>
+						<span class="tab-btn" data-tab="5">Book Passing</span>
+						<span class="tab-btn" data-tab="6">Tray Retrieval</span>
+					</div>
+					<figure class="tab-panel is-active" data-panel="0">
+						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+						<figcaption class="caption">Apple Preparing &mdash; lifestyle clip</figcaption>
+					</figure>
+					<figure class="tab-panel" data-panel="1">
+						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+						<figcaption class="caption">Peach Preparing &mdash; lifestyle clip</figcaption>
+					</figure>
+					<figure class="tab-panel" data-panel="2">
+						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+						<figcaption class="caption">Steak Seasoning &mdash; lifestyle clip</figcaption>
+					</figure>
+					<figure class="tab-panel" data-panel="3">
+						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+						<figcaption class="caption">Toy Arrangement &mdash; lifestyle clip</figcaption>
+					</figure>
+					<figure class="tab-panel" data-panel="4">
+						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+						<figcaption class="caption">Tissue Box Sharing &mdash; lifestyle clip</figcaption>
+					</figure>
+					<figure class="tab-panel" data-panel="5">
+						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+						<figcaption class="caption">Book Passing &mdash; lifestyle clip</figcaption>
+					</figure>
+					<figure class="tab-panel" data-panel="6">
+						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+						<figcaption class="caption">Tray Retrieval &mdash; lifestyle clip</figcaption>
+					</figure>
+				</div>
+			</section>
+
+			<hr style="margin-top: 1em;">
+
+			<!-- ------------------------ 2. METHOD ------------------------ -->
+			<section id="method">
 				<h2>Method</h2>
 				<p>
-					Video2Sim2Real is a full-stack framework that turns a <b>single</b> human manipulation
-					video into a deployable robot skill. It first uses off-the-shelf foundation models to
-					reconstruct a simulator-ready digital twin and to extract robot and object motion priors.
-					Rather than trusting the extracted robot motion as a fixed reference, it identifies
-					object-centric keyframes and optimizes the corresponding robot configurations from the
-					simulator's object information; these configurations then act as anchors that refine the
-					full robot motion so that it has the intended effect on the environment.
+					We develop a full-stack framework, <b style="font-weight:900;">Video2Sim2Real</b>, for
+					autonomous skill acquisition from the human manipulation videos. The framework consists
+					of four main modules. First, an off-the-shelf perception module leverages foundation
+					models to automatically reconstruct a digital-twin simulator as the refinement playground
+					and extract robot and object motions. Second, a refinement module uses the simulator, key
+					manipulation frames identified from object motions, and corresponding object information
+					to optimize robot configurations for trajectory interpolation. Third, a sim-to-real
+					transfer module learns both IL and RL policies to enable reliable real-world execution.
+					Finally, an optional spatial generalization module uses the collision-aware motion
+					planner CuRobo to generate robot trajectories for novel object configurations.
 				</p>
-				<p>
-					To close the sim-to-real gap, a decoupled strategy separates robustness to noisy,
-					incomplete perception from variation in hand&ndash;object interaction dynamics: imitation
-					learning recalibrates robot configurations from noisy real-world point clouds, while
-					residual reinforcement learning performs local finger-level adaptation for robust
-					interaction. A collision-aware motion planner adds spatial generalization to novel object
-					configurations.
-				</p>
-				<!-- Drop your pipeline/architecture figure here (replace the placeholder). -->
-				<span class="image fit"><img src="assets/images/placeholder.svg" alt="Method figure placeholder"></span>
 
-				<hr style="margin-top: 1em;">
+				<!-- Pipeline / architecture figure. Replace the placeholder with images/pipeline.png. -->
+				<figure>
+					<span class="image fit"><img src="assets/images/placeholder.svg" alt="Pipeline figure placeholder"></span>
+					<figcaption class="caption">Pipeline &mdash; perception, refinement, sim-to-real transfer, and spatial generalization.</figcaption>
+				</figure>
+			</section>
 
-				<!-- ------------------------ RESULTS ----------------------- -->
-				<h2>Results</h2>
-				<p>
-					Across several everyday manipulation tasks, Video2Sim2Real improves simulated task
-					success, safety, and trajectory coherence over a range of baselines, and transfers to the
-					real world more reliably than prior techniques. The clips below show the learned skills.
-					<!-- EDIT: adjust this summary and drop your result videos into the grid. -->
+			<hr style="margin-top: 1em;">
+
+			<!-- ---------------- 3. LOCAL GENERALIZATION ------------------ -->
+			<section id="generalization">
+				<h2>Local Generalization</h2>
+				<p class="section-sub">One-shot videos</p>
+				<p class="section-lead">
+					From a single demonstration, the learned skill generalizes to local object-pose variations.
 				</p>
-				<div class="box alt" style="margin-bottom: 1em;">
-					<div class="row 50% uniform" style="width: 100%;">
-						<!-- For each cell, swap the placeholder for: -->
-						<!-- <video autoplay loop muted playsinline style="width:100%;" preload="metadata"><source src="videos/task1.mp4" type="video/mp4"></video> -->
-						<div style="width: 33.33%; text-align: center;">
-							<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
-							<div class="caption">Task 1</div>
-						</div>
-						<div style="width: 33.33%; text-align: center;">
-							<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
-							<div class="caption">Task 2</div>
-						</div>
-						<div style="width: 33.33%; text-align: center;">
-							<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
-							<div class="caption">Task 3</div>
-						</div>
+
+				<!-- ===== Results table goes here ===== -->
+				<!-- EDIT: paste the results table from the paper (HTML <table>, or an exported -->
+				<!-- image/PDF figure). Intentionally left empty for now.                       -->
+
+				<!-- One-shot result videos, one per task. Hover a Task label to switch to its   -->
+				<!-- clip. Swap each panel's placeholder for:                                    -->
+				<!--   <video autoplay loop muted playsinline style="width:100%;"                -->
+				<!--     preload="metadata"><source src="videos/task1.mp4" type="video/mp4"></video> -->
+				<div class="video-tabs" data-tabs style="margin-top: 1.4em;">
+					<div class="tab-buttons">
+						<span class="tab-btn is-active" data-tab="0">Apple Preparing</span>
+						<span class="tab-btn" data-tab="1">Peach Preparing</span>
+						<span class="tab-btn" data-tab="2">Steak Seasoning</span>
+						<span class="tab-btn" data-tab="3">Toy Arrangement</span>
+						<span class="tab-btn" data-tab="4">Tissue Box Sharing</span>
+						<span class="tab-btn" data-tab="5">Book Passing</span>
+						<span class="tab-btn" data-tab="6">Tray Retrieval</span>
 					</div>
+					<figure class="tab-panel is-active" data-panel="0">
+						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+						<figcaption class="caption">Apple Preparing &mdash; one-shot result</figcaption>
+					</figure>
+					<figure class="tab-panel" data-panel="1">
+						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+						<figcaption class="caption">Peach Preparing &mdash; one-shot result</figcaption>
+					</figure>
+					<figure class="tab-panel" data-panel="2">
+						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+						<figcaption class="caption">Steak Seasoning &mdash; one-shot result</figcaption>
+					</figure>
+					<figure class="tab-panel" data-panel="3">
+						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+						<figcaption class="caption">Toy Arrangement &mdash; one-shot result</figcaption>
+					</figure>
+					<figure class="tab-panel" data-panel="4">
+						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+						<figcaption class="caption">Tissue Box Sharing &mdash; one-shot result</figcaption>
+					</figure>
+					<figure class="tab-panel" data-panel="5">
+						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+						<figcaption class="caption">Book Passing &mdash; one-shot result</figcaption>
+					</figure>
+					<figure class="tab-panel" data-panel="6">
+						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
+						<figcaption class="caption">Tray Retrieval &mdash; one-shot result</figcaption>
+					</figure>
 				</div>
+			</section>
 
-				<hr style="margin-top: 1em;">
+			<hr style="margin-top: 1em;">
 
-				<!-- ------------------------ BIBTEX ------------------------ -->
-				<!-- Kept anonymous for review. EDIT for the camera-ready once de-anonymized. -->
+			<!-- ------------------------ BIBTEX ------------------------ -->
+			<!-- Kept anonymous for review. EDIT for the camera-ready once de-anonymized. -->
+			<section id="bibtex">
 				<h2>BibTeX</h2>
 				<pre><code>@article{video2sim2real,
   title   = {Video2Sim2Real: Full-Stack Autonomous Dexterous Acquisition from a Single Human Video},
@@ -188,8 +309,8 @@
   journal = {Under review},
   year    = {2026}
 }</code></pre>
-
 			</section>
+
 		</div>
 
 		<!-- Template attribution (HTML5 UP, CCA 3.0). Reveals no author info. -->
@@ -205,5 +326,26 @@
 	<script src="assets/skel.min.js"></script>
 	<script src="assets/util.js"></script>
 	<script src="assets/main.js"></script>
+
+	<!-- Hover a Task label to switch to its video (no clicking). Works for any -->
+	<!-- number of [data-tabs] blocks; the choice sticks until you hover another. -->
+	<script>
+		(function () {
+			function activate(btn) {
+				var wrap = btn.closest('[data-tabs]');
+				if (!wrap) return;
+				var idx = btn.getAttribute('data-tab');
+				wrap.querySelectorAll('.tab-btn').forEach(function (b) {
+					b.classList.toggle('is-active', b === btn);
+				});
+				wrap.querySelectorAll('.tab-panel').forEach(function (p) {
+					p.classList.toggle('is-active', p.getAttribute('data-panel') === idx);
+				});
+			}
+			document.querySelectorAll('.tab-btn').forEach(function (btn) {
+				btn.addEventListener('mouseenter', function () { activate(btn); });
+			});
+		})();
+	</script>
 </body>
 </html>
