@@ -118,12 +118,14 @@
 		<div style="padding-top: 3em; padding-bottom: 1em; width: min(62em, 92%); margin-left: auto; margin-right: auto;">
 
 			<!-- =========================== DEMO =========================== -->
-			<!-- Headline demo, right under the title. Swap the placeholder for a video:        -->
-			<!--   <video autoplay muted loop playsinline controls style="width:100%;"          -->
-			<!--          preload="metadata"><source src="videos/demo.mp4" type="video/mp4"></video> -->
+			<!-- Headline overview video. It has audio, so it plays on demand via controls    -->
+			<!-- (no autoplay); preload="metadata" keeps the 46 MB file from downloading until -->
+			<!-- the visitor presses play.                                                     -->
 			<section id="demo" class="demo-block">
-				<span class="image fit"><img src="assets/images/placeholder.svg" alt="Demo video placeholder"></span>
-				<div class="caption">Demo</div>
+				<video controls playsinline preload="metadata" style="width:100%;">
+					<source src="videos/video2sim2real_yt_4k_h264.mp4" type="video/mp4">
+					Your browser does not support the video tag.
+				</video>
 			</section>
 
 			<!-- ----------------------- ABSTRACT ----------------------- -->
