@@ -59,6 +59,12 @@
 		.media-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
 		.media-grid figure { margin: 0; }
 
+		/* Lifestyle clips — centered flex grid (4 per row, last row centered) */
+		.lifestyle-grid { display: flex; flex-wrap: wrap; justify-content: center; align-items: start; gap: 0.5em 1em; margin: 1.2em 0; }
+		main#main-content .lifestyle-grid figure { margin: 0; flex: 0 0 calc(25% - 1em); }
+		.lifestyle-grid video { display: block; }
+		.lifestyle-grid figcaption { margin-top: 0.2em; }
+
 		/* Hover-to-switch task selector (move the mouse over a task — no clicking) */
 		.video-tabs { margin: 1.2em 0; }
 		.tab-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 1.3em; margin-bottom: 1em; border-bottom: 1px solid #e2e8f0; }
@@ -76,6 +82,7 @@
 			header h1 { font-size: 2.5em; }
 			header .subtitle { font-size: 1.2em; white-space: normal; }
 			.media-grid.cols-2, .media-grid.cols-3 { grid-template-columns: 1fr; }
+			main#main-content .lifestyle-grid figure { flex-basis: calc(50% - 1em); }
 		}
 	</style>
 </head>
@@ -158,21 +165,8 @@
 					without robot demonstrations or expert intervention.
 				</p>
 
-				<!-- Teaser figure. Swap the placeholder for your <img> or <video>:                  -->
-				<!--   image: <img class="image fit" src="images/teaser.png" alt="">                  -->
-				<!--   video: <video autoplay muted loop playsinline style="width:100%;"              -->
-				<!--            preload="metadata"><source src="videos/teaser.mp4" type="video/mp4"></video> -->
-				<figure>
-					<span class="image fit"><img src="assets/images/placeholder.svg" alt="Teaser figure placeholder"></span>
-					<figcaption class="caption">Teaser &mdash; from one human video to an autonomous robot skill.</figcaption>
-				</figure>
-
-				<!-- Lifestyle / in-the-wild clips, one per task. Hover a Task label to switch    -->
-				<!-- to its clip, so the seven videos don't share one row. Swap each panel's      -->
-				<!-- placeholder for:                                                             -->
-				<!--   <video autoplay muted loop playsinline style="width:100%;"                 -->
-				<!--     preload="metadata"><source src="videos/lifestyle1.mp4" type="video/mp4"></video> -->
-				<div class="video-tabs" data-tabs>
+				<!-- Teaser: hover a task label to switch its human->robot clip (left = human demo, right = robot reproducing it). -->
+				<div class="video-tabs teaser-tabs" data-tabs>
 					<div class="tab-buttons">
 						<span class="tab-btn is-active" data-tab="0">Apple Preparing</span>
 						<span class="tab-btn" data-tab="1">Peach Preparing</span>
@@ -183,32 +177,58 @@
 						<span class="tab-btn" data-tab="6">Tray Retrieval</span>
 					</div>
 					<figure class="tab-panel is-active" data-panel="0">
-						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
-						<figcaption class="caption">Apple Preparing &mdash; lifestyle clip</figcaption>
+						<video loop muted playsinline preload="metadata" style="width:100%;"><source src="videos/apple_2col.mp4" type="video/mp4"></video>
 					</figure>
 					<figure class="tab-panel" data-panel="1">
-						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
-						<figcaption class="caption">Peach Preparing &mdash; lifestyle clip</figcaption>
+						<video loop muted playsinline preload="metadata" style="width:100%;"><source src="videos/peach_2col.mp4" type="video/mp4"></video>
 					</figure>
 					<figure class="tab-panel" data-panel="2">
-						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
-						<figcaption class="caption">Steak Seasoning &mdash; lifestyle clip</figcaption>
+						<video loop muted playsinline preload="metadata" style="width:100%;"><source src="videos/spice_2col.mp4" type="video/mp4"></video>
 					</figure>
 					<figure class="tab-panel" data-panel="3">
-						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
-						<figcaption class="caption">Toy Arrangement &mdash; lifestyle clip</figcaption>
+						<video loop muted playsinline preload="metadata" style="width:100%;"><source src="videos/toy_2col.mp4" type="video/mp4"></video>
 					</figure>
 					<figure class="tab-panel" data-panel="4">
-						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
-						<figcaption class="caption">Tissue Box Sharing &mdash; lifestyle clip</figcaption>
+						<video loop muted playsinline preload="metadata" style="width:100%;"><source src="videos/box_2col.mp4" type="video/mp4"></video>
 					</figure>
 					<figure class="tab-panel" data-panel="5">
-						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
-						<figcaption class="caption">Book Passing &mdash; lifestyle clip</figcaption>
+						<video loop muted playsinline preload="metadata" style="width:100%;"><source src="videos/book_2col.mp4" type="video/mp4"></video>
 					</figure>
 					<figure class="tab-panel" data-panel="6">
-						<span class="image fit"><img src="assets/images/placeholder.svg" alt=""></span>
-						<figcaption class="caption">Tray Retrieval &mdash; lifestyle clip</figcaption>
+						<video loop muted playsinline preload="metadata" style="width:100%;"><source src="videos/tray_2col.mp4" type="video/mp4"></video>
+					</figure>
+				</div>
+				<p class="caption">Teaser &mdash; from one human video to an autonomous robot skill.</p>
+
+				<!-- Lifestyle / in-the-wild clips, one per task — static 4+3 grid, each autoplaying muted+looping with its heading below. -->
+				<div class="lifestyle-grid">
+					<figure>
+						<video autoplay loop muted playsinline style="width:100%;"><source src="videos/apple_life.mp4" type="video/mp4"></video>
+						<figcaption class="caption">Apple Preparing</figcaption>
+					</figure>
+					<figure>
+						<video autoplay loop muted playsinline style="width:100%;"><source src="videos/peach_life.mp4" type="video/mp4"></video>
+						<figcaption class="caption">Peach Preparing</figcaption>
+					</figure>
+					<figure>
+						<video autoplay loop muted playsinline style="width:100%;"><source src="videos/spice_life.mp4" type="video/mp4"></video>
+						<figcaption class="caption">Steak Seasoning</figcaption>
+					</figure>
+					<figure>
+						<video autoplay loop muted playsinline style="width:100%;"><source src="videos/toy_life.mp4" type="video/mp4"></video>
+						<figcaption class="caption">Toy Arrangement</figcaption>
+					</figure>
+					<figure>
+						<video autoplay loop muted playsinline style="width:100%;"><source src="videos/box_life.mp4" type="video/mp4"></video>
+						<figcaption class="caption">Tissue Box Sharing</figcaption>
+					</figure>
+					<figure>
+						<video autoplay loop muted playsinline style="width:100%;"><source src="videos/book_life.mp4" type="video/mp4"></video>
+						<figcaption class="caption">Book Passing</figcaption>
+					</figure>
+					<figure>
+						<video autoplay loop muted playsinline style="width:100%;"><source src="videos/tray_life.mp4" type="video/mp4"></video>
+						<figcaption class="caption">Tray Retrieval</figcaption>
 					</figure>
 				</div>
 			</section>
@@ -240,12 +260,12 @@
 
 			<hr style="margin-top: 1em;">
 
-			<!-- ---------------- 3. LOCAL GENERALIZATION ------------------ -->
+			<!-- ---------------- 3. ROBUSTNESS ------------------ -->
 			<section id="generalization">
-				<h2>Local Generalization</h2>
+				<h2>Robustness</h2>
 				<p class="section-sub">One-shot videos</p>
 				<p class="section-lead">
-					From a single demonstration, the learned skill generalizes to local object-pose variations.
+					From a single demonstration, the learned skill is robust to local object-pose variations.
 				</p>
 
 				<!-- ===== Results table goes here ===== -->
@@ -279,7 +299,7 @@
 						<figcaption class="caption">Steak Seasoning &mdash; one-shot result</figcaption>
 					</figure>
 					<figure class="tab-panel" data-panel="3">
-						<video controls playsinline preload="metadata" style="width:100%;"><source src="videos/elephant_one_shot.mp4" type="video/mp4"></video>
+						<video controls playsinline preload="metadata" style="width:100%;"><source src="videos/toy_one_shot.mp4" type="video/mp4"></video>
 						<figcaption class="caption">Toy Arrangement &mdash; one-shot result</figcaption>
 					</figure>
 					<figure class="tab-panel" data-panel="4">
@@ -331,6 +351,16 @@
 	<!-- number of [data-tabs] blocks; the choice sticks until you hover another. -->
 	<script>
 		(function () {
+			// For teaser selectors only: play the active clip, pause the rest.
+			function syncVideos(wrap, idx) {
+				if (!wrap.classList.contains('teaser-tabs')) return;
+				wrap.querySelectorAll('.tab-panel').forEach(function (p) {
+					var v = p.querySelector('video');
+					if (!v) return;
+					if (p.getAttribute('data-panel') === idx) { v.play().catch(function () {}); }
+					else { v.pause(); }
+				});
+			}
 			function activate(btn) {
 				var wrap = btn.closest('[data-tabs]');
 				if (!wrap) return;
@@ -341,9 +371,15 @@
 				wrap.querySelectorAll('.tab-panel').forEach(function (p) {
 					p.classList.toggle('is-active', p.getAttribute('data-panel') === idx);
 				});
+				syncVideos(wrap, idx);
 			}
 			document.querySelectorAll('.tab-btn').forEach(function (btn) {
 				btn.addEventListener('mouseenter', function () { activate(btn); });
+			});
+			// Kick off the initially-active clip in each teaser selector.
+			document.querySelectorAll('.teaser-tabs').forEach(function (wrap) {
+				var active = wrap.querySelector('.tab-btn.is-active');
+				if (active) syncVideos(wrap, active.getAttribute('data-tab'));
 			});
 		})();
 	</script>
