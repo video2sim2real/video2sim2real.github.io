@@ -28,10 +28,30 @@
 
 	<!-- The template's stylesheet (HTML5 UP "Strata", trimmed + de-branded) -->
 	<link rel="stylesheet" href="assets/main.css">
+	<!-- main.css loads Source Sans Pro in regular weight only, which leaves the browser to fake -->
+	<!-- every bold. These are the real semibold/bold faces (run-in headings, best table values). -->
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:600,600italic,700&amp;display=swap">
+
+	<!-- KaTeX typesets the appendix math. Self-hosted in assets/katex/, so it needs no CDN. -->
+	<link rel="stylesheet" href="assets/katex/katex.min.css">
 
 	<!-- ===== Small style block layered on top of the template ===== -->
 	<style>
-		:root { --accent: #2b6cb0; }            /* EDIT: your accent colour */
+		:root {
+			--accent: #2b6cb0;                  /* EDIT: your accent colour */
+			--ink: #1a4f8a;                     /* dark blue of the hero title, reused for headings */
+			--side-w: 18rem;                    /* width of the side menu */
+		}
+
+		/* ---- Page frame: a fixed side menu on the left, everything else shifted right of it ---- */
+		html { scroll-behavior: smooth; }
+		.page { margin-left: var(--side-w); }
+		/* The one content column. Every block inside it (text, videos, figures, tables, */
+		/* equations) spans this full width, so their left and right edges all line up.  */
+		.content { width: min(62em, 92%); margin: 0 auto; padding: 3em 0 1em; }
+		main#main-content { color: #4a5568; }
+		main#main-content section[id], .appendix [id] { scroll-margin-top: 1.25rem; }
+		#abstract p, #method p, .appendix p, .appendix li { text-align: justify; }
 
 		/* Hero (white header, blue title) */
 		header h1 { margin-top: 0; margin-bottom: 0.25em; font-size: 4em; line-height: 1.1; color: #1a4f8a; }
@@ -56,15 +76,24 @@
 		/* Demo block right under the hero */
 		.demo-block { margin: 0 auto 1.5em; }
 
+		/* Reserve every clip's box before its metadata arrives. Without this the page grows a moment */
+		/* after loading, and a menu jump / deep link made in that moment lands in the wrong spot.    */
+		/* ("auto" = switch to the file's real ratio once known. EDIT if you swap in other sizes.)    */
+		#demo video { aspect-ratio: auto 1280 / 720; }
+		.teaser-tabs video { aspect-ratio: auto 1920 / 720; }
+		.lifestyle-grid video { aspect-ratio: auto 720 / 720; }
+		.inview-autoplay video { aspect-ratio: auto 1280 / 472; }
+
 		/* Responsive grids of figure/video placeholders */
 		.media-grid { display: grid; gap: 1em; margin: 1.2em 0; }
 		.media-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
 		.media-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
 		.media-grid figure { margin: 0; }
 
-		/* Lifestyle clips — centered flex grid (4 per row, last row centered) */
+		/* Lifestyle clips — centered flex grid (4 per row, last row centered). Four clips + three */
+		/* 1em gaps add up to exactly 100%, so a full row is flush with the column edges.          */
 		.lifestyle-grid { display: flex; flex-wrap: wrap; justify-content: center; align-items: start; gap: 0.5em 1em; margin: 1.2em 0; }
-		main#main-content .lifestyle-grid figure { margin: 0; flex: 0 0 calc(25% - 1em); }
+		main#main-content .lifestyle-grid figure { margin: 0; flex: 0 0 calc((100% - 3em) / 4); }
 		.lifestyle-grid video { display: block; }
 		.lifestyle-grid figcaption { margin-top: 0.2em; }
 
@@ -79,18 +108,286 @@
 		.site-footer { text-align: center; color: #9aa6b2; font-size: 0.8em; padding: 1.5em 0 2.5em; }
 		.site-footer a { color: #9aa6b2; }
 
+		/* ===================== Side menu (navigation for the whole page) ===================== */
+		/* Sized in rem so it stays put while the template scales the body text (12pt / 16pt).   */
+		.side-nav {
+			position: fixed; top: 0; bottom: 0; left: 0; z-index: 1002; width: var(--side-w);
+			padding: 1.4rem 0 3rem; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+			background: #f8fafc; border-right: 1px solid #e6e9ee; font-size: 0.94rem; line-height: 1.35;
+		}
+		.side-nav ul { list-style: none; margin: 0; padding: 0; }
+		.side-nav li { padding: 0; }
+		.side-nav a { display: flex; gap: 0.6em; padding: 0.4rem 1.2rem 0.4rem 1.35rem; border: 0; border-left: 3px solid transparent; color: #4a5568; }
+		.side-nav a:hover { color: var(--accent); background: #eef3f9; }
+		.side-nav a.is-active { color: var(--accent); font-weight: 600; background: #e7effa; border-left-color: var(--accent); }
+		.side-nav li.is-trail > a:not(.is-active) { color: var(--ink); }
+		.side-nav a.side-brand { margin: 0 0 0.6rem; padding-top: 0.2rem; padding-bottom: 1.1rem; border-bottom: 1px solid #e6e9ee; font-size: 1.22rem; font-weight: 600; color: var(--ink); }
+		.side-nav a.side-brand:hover { background: none; }
+		.side-nav .n { flex: none; min-width: 1em; font-weight: 600; color: var(--accent); }
+		/* "Appendix" group heading */
+		.side-nav li.side-group { margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid #e6e9ee; }
+		.side-nav li.side-group > a { font-size: 0.8rem; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: #718096; }
+		/* Sub-levels (A.1, A.1.1, ...) stay folded until their appendix is the one being read. */
+		.side-nav ul.sub { display: none; padding-bottom: 0.35rem; }
+		.side-nav li.is-open > ul.sub { display: block; }
+		.side-nav ul.sub a { padding-top: 0.28rem; padding-bottom: 0.28rem; padding-left: 2.75rem; font-size: 0.9em; }
+		.side-nav ul.sub .n { min-width: 1.7em; font-weight: 400; }
+		.side-nav ul.sub ul a { padding-left: 4.75rem; font-size: 0.86em; color: #718096; }
+		.side-nav ul.sub ul a.is-active { color: var(--accent); }
+
+		/* Phone / tablet: the menu becomes a drawer opened from a slim top bar. */
+		.top-bar, .nav-backdrop { display: none; }
+		.top-bar {
+			position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 3rem; align-items: center; gap: 0.35rem; padding: 0 0.9rem 0 0.3rem;
+			background: #fff; border-bottom: 1px solid #e6e9ee; font-size: 0.95rem; line-height: 1.2;
+		}
+		.nav-toggle { flex: none; width: 2.6rem; height: 2.6rem; padding: 0; border: 0; border-radius: 7px; background: none; color: var(--ink); font-size: 1.15rem; cursor: pointer; }
+		.nav-toggle:hover { background: #eef3f9; }
+		.top-bar a { flex: none; border: 0; font-weight: 600; color: var(--ink); }
+		.top-bar-here { min-width: 0; margin-left: auto; overflow: hidden; color: #718096; text-overflow: ellipsis; white-space: nowrap; }
+		.nav-backdrop { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 1001; background: rgba(26, 32, 44, 0.45); }
+
+		/* ================================== Appendix ================================== */
+		.appendix p { margin: 0 0 1.1em; }
+		.appendix .section-lead { margin: 0 auto 1.4em; text-align: center; }
+		.appendix .app-note { margin: 0 0 0.5em; font-size: 0.9em; color: #718096; text-align: center; }
+		/* Contents cards at the top of the appendix */
+		main#main-content ul.app-toc { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6em 1em; margin: 0 0 1.3em; padding: 0; list-style: none; }
+		ul.app-toc li { padding: 0; text-align: left; }
+		ul.app-toc a { display: flex; gap: 0.75em; height: 100%; padding: 0.55em 0.95em; border: 1px solid #e2e8f0; border-radius: 7px; color: #2d3748; transition: border-color 0.15s, color 0.15s, background 0.15s; }
+		ul.app-toc a:hover { border-color: var(--accent); background: #f5f9fe; color: var(--accent); }
+		ul.app-toc .n { flex: none; min-width: 1.1em; font-weight: 600; color: var(--accent); }
+
+		/* Headings:  h3 = Appendix A..G   h4 = A.1   h5 = A.1.1 */
+		.appendix h3 { margin: 3.4em 0 0.8em; padding-top: 1.7em; border-top: 2px solid #efefef; font-size: 1.5em; font-weight: 600; line-height: 1.25; color: var(--ink); }
+		.appendix h3 .app-label { display: block; margin-bottom: 0.4em; font-size: 0.56em; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); }
+		.appendix h4 { margin: 2.3em 0 0.7em; font-size: 1.2em; font-weight: 600; line-height: 1.3; color: #2d3748; }
+		.appendix h5 { margin: 1.9em 0 0.6em; font-size: 1.05em; font-weight: 600; font-style: italic; line-height: 1.3; color: #2d3748; }
+		.appendix h4 .n, .appendix h5 .n { margin-right: 0.35em; font-style: normal; color: var(--accent); }
+
+		/* Links to figures / tables / equations / references */
+		.appendix a.xref, .appendix a.cite { border-bottom: 0; color: var(--accent); white-space: nowrap; }
+		.appendix a.xref:hover, .appendix a.cite:hover { text-decoration: underline; }
+		.appendix .tt { font-family: "Courier New", monospace; font-size: 0.93em; }
+		.appendix pre { margin: 0 0 1.3em; }
+		main#main-content pre code { margin: 0; }   /* the template insets code boxes by 0.25em; keep them flush with the text */
+		.appendix pre code { line-height: 1.5; color: #2d3748; }
+
+		/* Enumerations: "(1) ..." and "i) ..." */
+		.appendix ol.enum { margin: 0 0 1.1em; padding: 0; list-style: none; counter-reset: item; }
+		.appendix ol.enum > li { position: relative; margin: 0 0 0.45em; padding-left: 2.3em; counter-increment: item; }
+		.appendix ol.enum > li::before { position: absolute; left: 0; color: var(--accent); content: "(" counter(item) ")"; }
+		.appendix ol.enum.roman > li::before { content: counter(item, lower-roman) ")"; }
+
+		/* Math. Display equations sit in .eq: full column width, scrolling sideways rather than overflowing on phones. */
+		.appendix .katex { font-size: 1.08em; }
+		.appendix .eq { margin: 1em 0 1.2em; padding: 0.15em 0; overflow-x: auto; overflow-y: hidden; }
+		.appendix .eq .katex-display { margin: 0; }
+
+		/* Figures and tables share one frame: exactly as wide as the text, caption in the same style. */
+		main#main-content figure.paper-fig, main#main-content figure.paper-table { margin: 1.9em 0 2.1em; }
+		.paper-fig a { display: block; border: 0; cursor: zoom-in; }
+		.paper-fig img { display: block; width: 100%; height: auto; }
+		.paper-fig figcaption, .paper-table figcaption {
+			font-size: 0.92em; line-height: 1.5; color: #555;
+			text-align: justify; -moz-text-align-last: center; text-align-last: center;
+		}
+		.paper-fig figcaption { margin-top: 0.8em; }
+		.paper-table figcaption { margin-bottom: 0.8em; }
+		.paper-fig figcaption b:first-child, .paper-table figcaption b:first-child { color: #2d3748; }
+		.paper-table .table-note { margin: 0.6em 0 0; font-size: 0.85em; color: #718096; text-align: center; }
+
+		/* Tables in the paper's booktabs look (overrides the template's striped style). */
+		.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; container-type: inline-size; }
+		.paper-table table { width: 100%; margin: 0; border-top: 2px solid #2d3748; border-bottom: 2px solid #2d3748; font-size: 0.9em; font-variant-numeric: tabular-nums; line-height: 1.35; }
+		.paper-table thead { border-bottom: 1px solid #2d3748; }
+		.paper-table th, .paper-table td { padding: 0.5em 0.6em; font-size: 1em; text-align: center; vertical-align: middle; }
+		.paper-table thead th { padding-top: 0.6em; font-weight: 600; color: #2d3748; }
+		.paper-table thead th .grp { display: block; margin: 0 0.35em; padding-bottom: 0.4em; border-bottom: 1px solid #a0aec0; }
+		/* Group headers hang from the bottom of their row, so their rules line up even when a label wraps. */
+		.paper-table thead tr:first-child th:not([rowspan]) { vertical-align: bottom; }
+		.paper-table tbody tr, .paper-table tbody tr:nth-child(2n + 1) { border: 0; background: none; }
+		.paper-table tbody tr:hover { background: #f7fafc; }
+		.paper-table tbody th { font-weight: 400; color: inherit; text-align: left; white-space: nowrap; }
+		.paper-table td.l, .paper-table th.l { text-align: left; }
+		.paper-table.kv th:first-child { width: 50%; }
+		.paper-table tbody.sep, .paper-table tr.sep { border-top: 1px solid #cbd5e0; }
+		.paper-table tr.ours, .paper-table tr.ours:hover { background: #edf4fc !important; border-top: 1px solid #2d3748; }
+		.paper-table tr.ours th { font-weight: 600; color: #1a202c; }
+		.paper-table td.best, .paper-table td b { font-weight: 600; color: #1a202c; }
+		.paper-table td.second { text-decoration: underline; text-underline-offset: 2px; }
+		/* inline-block (not block): an underline on the cell must not carry over to the +/- line */
+		.paper-table td small { display: inline-block; width: 100%; font-size: 0.8em; font-weight: 400; color: #718096; }
+		/* Wide per-task tables: like \resizebox in the paper, the type scales with the column so the */
+		/* table always spans exactly the text width (mean on top, +/- std beneath keeps cells narrow). */
+		/* (Two declarations on purpose: browsers without container units keep the fixed size and scroll.) */
+		.paper-table.wide table { min-width: 44rem; font-size: 12px; font-size: clamp(10px, 1.5cqw, 17px); }
+		.paper-table.wide th, .paper-table.wide td { padding: 0.45em 0.3em; }
+		.paper-table.wide tbody th { padding-left: 0.5em; padding-right: 0.8em; }
+		/* When a wide table has to scroll sideways (phones), the method names stay in view. */
+		.paper-table.wide tbody th, .paper-table.wide thead th:first-child { position: -webkit-sticky; position: sticky; left: 0; z-index: 1; background: #fff; }
+		.paper-table.wide tbody tr:hover th { background: #f7fafc; }
+		.paper-table.wide tr.ours th, .paper-table.wide tr.ours:hover th { background: #edf4fc; }
+		.paper-table.t-success table { font-size: 11px; font-size: clamp(10px, 1.32cqw, 17px); }   /* 17 columns */
+		.paper-table.t-success td:nth-child(3n + 2), .paper-table.t-success td:nth-child(n + 14) { border-left: 1px solid #e2e8f0; }
+
+		/* Reference list */
+		.appendix ol.ref-list { margin: 0; padding: 0; list-style: none; counter-reset: ref; font-size: 0.93em; line-height: 1.5; }
+		.appendix ol.ref-list li { position: relative; margin: 0 0 0.6em; padding-left: 2.7em; counter-increment: ref; }
+		.appendix ol.ref-list li::before { position: absolute; left: 0; color: var(--accent); content: "[" counter(ref) "]"; }
+		.appendix ol.ref-list a { overflow-wrap: anywhere; }
+		/* Brief highlight on whatever an in-page link just jumped to */
+		@keyframes target-flash { from { background-color: #fdf3c4; } to { background-color: transparent; } }
+		.appendix figure:target, .appendix .eq:target, .appendix ol.ref-list li:target { animation: target-flash 2s ease-out; }
+
+		/* Very large screens: the template raises body text to 16pt, so widen the menu with it. */
+		@media screen and (min-width: 1801px) {
+			:root { --side-w: 21rem; }
+			.side-nav { font-size: 1.1rem; }
+		}
+
+		/* Below ~1180px there is no room for a fixed menu: tuck it away as a drawer. */
+		@media screen and (max-width: 1180px) {
+			body { padding-top: 3rem; }
+			.page { margin-left: 0; }
+			.top-bar { display: flex; }
+			.side-nav {
+				width: min(20rem, 86vw); visibility: hidden; box-shadow: 0 0 2.5rem rgba(0, 0, 0, 0.22);
+				-webkit-transform: translateX(-100%); transform: translateX(-100%);
+				transition: transform 0.25s ease, visibility 0s linear 0.25s;
+			}
+			body.nav-open { overflow: hidden; }
+			body.nav-open .side-nav { visibility: visible; -webkit-transform: none; transform: none; transition: transform 0.25s ease, visibility 0s; }
+			body.nav-open .nav-backdrop { display: block; }
+			main#main-content section[id], .appendix [id] { scroll-margin-top: 4rem; }
+			header .subtitle { white-space: normal; text-wrap: balance; }
+		}
+
 		/* Make the grids stack on phones */
 		@media screen and (max-width: 736px) {
 			.row > * { width: 100% !important; }
 			header h1 { font-size: 2.5em; }
 			header .subtitle { font-size: 1.2em; white-space: normal; }
 			.media-grid.cols-2, .media-grid.cols-3 { grid-template-columns: 1fr; }
-			main#main-content .lifestyle-grid figure { flex-basis: calc(50% - 1em); }
+			main#main-content .lifestyle-grid figure { flex-basis: calc((100% - 1em) / 2); }
+			main#main-content ul.app-toc { grid-template-columns: 1fr; }
+			/* Justified text leaves rivers in a narrow column */
+			#abstract p, #method p, .appendix p, .appendix li { text-align: left; }
+			.paper-fig figcaption, .paper-table figcaption { text-align: left; -moz-text-align-last: left; text-align-last: left; }
+			.appendix h3 { font-size: 1.3em; }
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			html { scroll-behavior: auto; }
+			.side-nav { transition: none !important; }
+		}
+		@media print {
+			.side-nav, .top-bar, .nav-backdrop { display: none !important; }
+			.page { margin-left: 0; }
 		}
 	</style>
 </head>
 
 <body id="top">
+
+	<!-- ========================== SIDE MENU ========================== -->
+	<!-- Navigation for the whole page. On wide screens it is a fixed column on the left; below  -->
+	<!-- ~1180px it turns into a drawer opened from the slim top bar. The script at the bottom   -->
+	<!-- highlights the section being read and unfolds that appendix's sub-sections.             -->
+	<!-- EDIT: when you add/rename a section, add/rename its <li> here (href = the section's id). -->
+	<div class="top-bar">
+		<button type="button" class="nav-toggle" aria-label="Open the section menu" aria-controls="side-nav" aria-expanded="false"><i class="fas fa-bars" aria-hidden="true"></i></button>
+		<a href="#top">Video2Sim2Real</a>
+		<span class="top-bar-here" id="top-bar-here" aria-hidden="true"></span>
+	</div>
+	<div class="nav-backdrop"></div>
+
+	<nav id="side-nav" class="side-nav" aria-label="Page sections">
+		<a class="side-brand" href="#top" data-nospy>Video2Sim2Real</a>
+		<ul>
+			<li><a href="#top">Overview</a></li>
+			<li><a href="#abstract">Abstract</a></li>
+			<li><a href="#autonomous">Autonomous</a></li>
+			<li><a href="#method">Method</a></li>
+			<li><a href="#generalization">Robustness</a></li>
+			<li><a href="#bibtex">BibTeX</a></li>
+
+			<li class="side-group"><a href="#appendix">Appendix</a>
+				<ul>
+					<li><a href="#appendix-a"><span class="n">A</span> Module Details</a>
+						<ul class="sub">
+							<li><a href="#app-a-1"><span class="n">A.1</span> Off-the-shelf Estimation Modules</a>
+								<ul>
+									<li><a href="#app-a-1-1">Digital-Twin Reconstruction</a></li>
+									<li><a href="#app-a-1-2">Motion Estimation</a></li>
+								</ul>
+							</li>
+							<li><a href="#app-a-2"><span class="n">A.2</span> Refinement Modules</a>
+								<ul>
+									<li><a href="#app-a-2-1">Keyframe Identification</a></li>
+									<li><a href="#app-a-2-2">Keyframe Refinement</a></li>
+								</ul>
+							</li>
+							<li><a href="#app-a-3"><span class="n">A.3</span> Sim-to-Real Module</a>
+								<ul>
+									<li><a href="#app-a-3-1">Distillation Learning</a></li>
+									<li><a href="#app-a-3-2">Residual RL Learning</a></li>
+								</ul>
+							</li>
+							<li><a href="#app-a-4"><span class="n">A.4</span> Spatial Generalization Module</a></li>
+						</ul>
+					</li>
+					<li><a href="#appendix-b"><span class="n">B</span> Geometry Gap &amp; Physics Gap</a>
+						<ul class="sub">
+							<li><a href="#app-b-1"><span class="n">B.1</span> Geometry Gap</a></li>
+							<li><a href="#app-b-2"><span class="n">B.2</span> Physics Gap</a></li>
+						</ul>
+					</li>
+					<li><a href="#appendix-c"><span class="n">C</span> Refinement Baseline Details</a>
+						<ul class="sub">
+							<li><a href="#app-c-1"><span class="n">C.1</span> Baseline Descriptions</a></li>
+							<li><a href="#app-c-2"><span class="n">C.2</span> Baseline Design</a></li>
+						</ul>
+					</li>
+					<li><a href="#appendix-d"><span class="n">D</span> Refinement Experiment Details</a>
+						<ul class="sub">
+							<li><a href="#app-d-1"><span class="n">D.1</span> Keyframe Refinement</a></li>
+							<li><a href="#app-d-2"><span class="n">D.2</span> Evaluation Metrics</a>
+								<ul>
+									<li><a href="#app-d-2-1">Success Rate</a></li>
+									<li><a href="#app-d-2-2">Safe Rate</a></li>
+									<li><a href="#app-d-2-3">Trajectory Smoothness (Jerk)</a></li>
+									<li><a href="#app-d-2-4">Finish Frame</a></li>
+								</ul>
+							</li>
+							<li><a href="#app-d-3"><span class="n">D.3</span> Complete Per-task Evaluation Results</a></li>
+							<li><a href="#app-d-4"><span class="n">D.4</span> Qualitative Results of Baseline Rollouts</a></li>
+						</ul>
+					</li>
+					<li><a href="#appendix-e"><span class="n">E</span> Sim-to-Real Experiment Details</a>
+						<ul class="sub">
+							<li><a href="#app-e-1"><span class="n">E.1</span> Baseline Details</a></li>
+							<li><a href="#app-e-2"><span class="n">E.2</span> Test-set Randomization in Simulation</a></li>
+							<li><a href="#app-e-3"><span class="n">E.3</span> Multi-stage Per-task Task Success Rate</a></li>
+							<li><a href="#app-e-4"><span class="n">E.4</span> Real-World Evaluation Range</a></li>
+							<li><a href="#app-e-5"><span class="n">E.5</span> Complete Real-World Evaluation Results</a></li>
+							<li><a href="#app-e-6"><span class="n">E.6</span> Ablation of Sim-to-Real Policies</a></li>
+						</ul>
+					</li>
+					<li><a href="#appendix-f"><span class="n">F</span> Time-Cost Breakdown</a></li>
+					<li><a href="#appendix-g"><span class="n">G</span> Spatial Generalization Results</a>
+						<ul class="sub">
+							<li><a href="#app-g-1"><span class="n">G.1</span> Cluttered Environment and Scene Reconstruction</a></li>
+							<li><a href="#app-g-2"><span class="n">G.2</span> Generated Trajectories and Simulation Evaluation</a></li>
+						</ul>
+					</li>
+					<li><a href="#appendix-references">References</a></li>
+				</ul>
+			</li>
+		</ul>
+	</nav>
+
+	<div class="page">
 
 	<!-- ============================ HERO ============================ -->
 	<!-- White hero with a blue title (no background image). Colours are in the  -->
@@ -111,6 +408,7 @@
 			<a href="#"><i class="fas fa-file-pdf"></i>&nbsp;Paper</a>
 			<a href="#"><i class="fas fa-video"></i>&nbsp;Video</a>
 			<a href="https://github.com/video2sim2real/video2sim2real" target="_blank" rel="noopener"><i class="fas fa-code"></i>&nbsp;Code</a>
+			<a href="#appendix"><i class="fas fa-book-open"></i>&nbsp;Appendix</a>
 		</nav>
 
 		<p class="venue">Under Review</p>
@@ -118,7 +416,8 @@
 
 	<!-- ========================== CONTENT ========================== -->
 	<main id="main-content">
-		<div style="padding-top: 3em; padding-bottom: 1em; width: min(62em, 92%); margin-left: auto; margin-right: auto;">
+		<!-- .content = the single text column; its width is set once in the <style> block. -->
+		<div class="content">
 
 			<!-- =========================== DEMO =========================== -->
 			<!-- Headline overview video. It has audio, so it plays on demand via controls    -->
@@ -336,6 +635,1185 @@
 }</code></pre>
 			</section>
 
+			<hr style="margin-top: 1em;">
+
+			<!-- =========================== APPENDIX =========================== -->
+			<!-- Transcribed from the paper source (appendices/*.tex). Appendix letters, and the figure / -->
+			<!-- table / equation numbers, match the PDF: numbering continues from the main paper        -->
+			<!-- (Figs. 1-4, Tables I-II), so the appendix starts at Fig. 5, Table III and Eq. (1).      -->
+			<!-- Math is LaTeX between \( \) and \[ \] (rendered by KaTeX) - inside it, write            -->
+			<!-- &amp; for "&" and &lt; / &gt; for "<" / ">". Figures live in images/appendix/           -->
+			<!-- (re-render them from the Overleaf PDFs with tools/render_appendix_figs.sh).             -->
+			<!-- Do NOT add loading="lazy" to the figures: over HTTP/1.1 the page's ~20 video clips hold -->
+			<!-- all 6 of the browser's connections once they start, and images requested after that    -->
+			<!-- never arrive (they stay blank). Requested with the page, they always load - 1.5 MB.     -->
+			<section id="appendix" class="appendix">
+				<h2>Appendix</h2>
+				<p class="section-lead">
+					Implementation details of every module, the baselines and evaluation metrics, and the
+					complete per-task results that supplement the paper.
+				</p>
+
+				<ul class="app-toc">
+					<li><a href="#appendix-a"><span class="n">A</span> Module Details</a></li>
+					<li><a href="#appendix-b"><span class="n">B</span> Geometry Gap &amp; Physics Gap</a></li>
+					<li><a href="#appendix-c"><span class="n">C</span> Refinement Baseline Details</a></li>
+					<li><a href="#appendix-d"><span class="n">D</span> Refinement Experiment Details</a></li>
+					<li><a href="#appendix-e"><span class="n">E</span> Sim-to-Real Experiment Details</a></li>
+					<li><a href="#appendix-f"><span class="n">F</span> Time-Cost Breakdown</a></li>
+					<li><a href="#appendix-g"><span class="n">G</span> Spatial Generalization Results</a></li>
+					<li><a href="#appendix-references"><span class="n">&#8212;</span> References</a></li>
+				</ul>
+				<p class="app-note">Figure, table, and equation numbers continue from the main paper (Figs.&nbsp;1&ndash;4 and Tables&nbsp;I&ndash;II appear there).</p>
+
+				<!-- ------------------ APPENDIX A: MODULE DETAILS ------------------ -->
+				<section id="appendix-a">
+					<h3><span class="app-label">Appendix A</span> Module Details</h3>
+					<p>In this section, we provide the implementation details of each module.</p>
+
+					<h4 id="app-a-1"><span class="n">A.1</span> Off-the-shelf Estimation Modules</h4>
+					<p>The off-the-shelf estimation modules are primarily used to construct the digital twin simulator and extract motion priors for both the robot and the object.</p>
+
+					<h5 id="app-a-1-1"><span class="n">A.1.1</span> Digital-Twin Reconstruction</h5>
+					<p>We reconstruct an object-level, simulator-ready digital twin from RGB-D human manipulation observations.</p>
+					<p>
+						<b>Inputs.</b>
+						We use three key RGB frames from the manipulation video,
+						\(\mathcal{I}_k=\{I_1,I_{\lfloor T/2 \rfloor},I_T\}\),
+						together with the reference scene image \(I_s\) for semantic parsing. The key frames provide temporal evidence for identifying the manipulated object and the task evolution, while the reference image provides a less-occluded view for recognizing all tabletop objects. For geometric reconstruction of the scene, we use the reference RGB-D observation \((I_s,D_s)\) and camera intrinsics, and extrinsics \(\mathbf{T}_{c \rightarrow t}\).
+					</p>
+					<p>
+						<b>Procedures.</b>
+						The pipeline consists of four stages: i) semantic scene parsing, ii) open-vocabulary object segmentation, iii) object-level 3D reconstruction, and iv) simulator asset export.
+					</p>
+					<p>
+						<i>Stage 1: Semantic scene parsing with Gemini.</i>
+						We first query Gemini&nbsp;<a class="cite" href="#ref-1">[1]</a>, using \(\mathcal{I}_k\) and \(I_s\) to infer a semantic scene description
+						\(\mathcal{S}_{sem}=(\mathcal{O},i_{\mathrm{manip}},i_{\mathrm{target}},\tau)\),
+						where \(\mathcal{O}=\{o_i\}_{i=1}^{N}\) is the set of detected tabletop objects. Each object is represented as \(o_i=(q_i,m_i)\), where \(q_i\) is a short text description for segmentation and \(m_i\) is a material category selected from a fixed vocabulary. The model is instructed to identify all distinct objects, determine which object is physically manipulated between the middle and final frames (denoted as \(i_{\mathrm{manip}}\)), classify the task type \(\tau\) (e.g., interactive manipulation or pushing), and identify the target object (\(i_{\mathrm{target}}\)) for interactive manipulation tasks. We enforce a structured JSON output so that the manipulated and target objects must correspond to entries in \(\mathcal{O}\).
+					</p>
+					<p>To achieve this, the input prompt is explicitly designed to force Gemini to return a structured scene description rather than free-form text. The prompt instructs Gemini that all objects lie on a tabletop surface and asks it to perform five tasks:</p>
+					<ol class="enum">
+						<li>list all distinct objects in the scene as concise segmentation-oriented prompts;</li>
+						<li>infer a coarse material type for each object from a fixed vocabulary {<span class="tt">wood</span>, <span class="tt">plastic</span>, <span class="tt">metal</span>, <span class="tt">glass</span>, <span class="tt">rubber</span>, <span class="tt">ceramic</span>, <span class="tt">cardboard</span>, <span class="tt">foam</span>, <span class="tt">fabric</span>, <span class="tt">other</span>};</li>
+						<li>identify which single object is physically manipulated between the middle and last frames;</li>
+						<li>classify the task type as either <span class="tt">interactive manipulation</span> or <span class="tt">pushing</span>;</li>
+						<li>if the task is interactive manipulation, identify the target object.</li>
+					</ol>
+					<p>The prompt further imposes two critical consistency constraints: the manipulated object prompt must exactly match one entry in the object list, and the target object prompt must also exactly match one entry in the object list and be different from the manipulated object. To make the prompts more segmentation-friendly, the model is asked to keep them short and spatially specific, e.g., &ldquo;blue cube on left&rdquo; or &ldquo;yellow bottle on right&rdquo;, and to disambiguate duplicated instances using location descriptors such as &ldquo;near left edge&rdquo; or &ldquo;near center&rdquo;. The required JSON schema is:</p>
+<pre><code>{
+  "scene": {
+    "objects": [
+      {
+        "prompt": "...",
+        "material_type": "wood|plastic|metal|glass|rubber|ceramic|cardboard|foam|fabric|other"
+      }
+    ],
+    "manipulated_object": {
+      "prompt": "..."
+    },
+    "task_type": "put_object_to_object|manipulate_object",
+    "target_object": {
+      "prompt": "..." or null
+    }
+  }
+}</code></pre>
+					<p>This schema is injected directly into the Gemini request as a schema hint and Gemini is required to return only valid JSON.</p>
+					<p>
+						<i>Stage 2: Open-vocabulary segmentation with SAM3.</i>
+						Given \(\mathcal{S}_{sem}\), we use each object description \(q_i\) as a text query for SAM3 on the reference image \(I_s\). This produces an object-level binary mask \(M_i\) for each object \(o_i\).
+						The output of this stage is the mask set
+						\(\mathcal{M}=\{M_i\}_{i=1}^{N}\).
+					</p>
+					<p>
+						<i>Stage 3: Object-level 3D reconstruction with SAM 3D Objects.</i>
+						We reconstruct each segmented object from the reference RGB-D observation \((I_s,D_s)\), camera intrinsics \(\mathbf{K}\), and mask \(M_i\). The depth map is first unprojected into a metric point map using \(\mathbf{K}\). We then apply SAM 3D Objects to each masked object region, obtaining a raw mesh \(\hat{\mathcal{G}}_i\),
+						and an initial camera-frame pose \(\mathbf{T}_c^i\).
+						The output of this stage is the set of raw object reconstructions
+						\(\hat{\mathcal{R}}=\{(\hat{\mathcal{G}}_i,\mathbf{T}_c^i)\}_{i=1}^{N}\).
+					</p>
+					<p>
+						<i>Stage 4: Simulator asset export.</i>
+						The raw reconstructions are converted into simulator-ready assets through geometry canonicalization, coordinate-frame transformation, and physical-property estimation.
+						First, each mesh \(\hat{\mathcal{G}}_i\) is locally canonicalized by applying a fixed orientation correction and shifting the mesh so that its lowest point lies on the support plane, yielding \(\mathcal{G}_i\). Second, using \(\mathbf{T}_{c\rightarrow t}\), we transform each camera-frame pose \(\mathbf{T}_c^i\) into the table-frame pose \(\mathbf{T}_t^i\). Third, we export each object as a URDF asset \(U_i\). The mass and inertial parameters are estimated from the reconstructed mesh volume and material label \(m_i\), and the contact parameters such as friction and restitution are assigned from a material-property table.
+					</p>
+					<p>
+						<b>Outputs.</b>
+						The final output is a digital-twin scene used in subsequent modules
+					</p>
+					<div class="eq">\[
+						\mathcal{S}=\big(\{(q_i, M_i, \mathcal{G}_i, \mathbf{T}_t^i, U_i)\}_{i=1}^{N},\; i_{\mathrm{manip}},\; i_{\mathrm{target}},\; \tau\big),
+					\]</div>
+					<p>where \(q_i\) is the semantic object description, \(M_i\) is the 2D object mask, \(\mathcal{G}_i\) is the canonicalized object mesh, \(\mathbf{T}_t^i \in SE(3)\) is the 6-DoF object pose in the table frame, and \(U_i\) is the simulator-ready URDF asset. The module also returns the index of manipulated object \(i_{\mathrm{manip}}\), the target object \(i_{\mathrm{target}}\) when applicable, and the task type \(\tau\).</p>
+
+					<h5 id="app-a-1-2"><span class="n">A.1.2</span> Motion Estimation</h5>
+					<p>We extract both robot hand and object trajectories from the RGB-D human manipulation video \(\mathcal{V}\), providing informative motion priors for the demonstrated manipulation task.</p>
+					<p>
+						<b>Robot Trajectory.</b>
+						We first use HaMeR&nbsp;<a class="cite" href="#ref-2">[2]</a> for human hand estimation. Specifically, given \(\mathcal{V}\), we extract a human hand trajectory \(\{\mathbf{p}_c^t\}_{t=1}^T\), where \(\mathbf{p}_c^t \in \mathbb{R}^{21 \times 3}\) denotes the 3D positions of 21 hand keypoints at time step \(t\) in the camera frame. We then transform them to robot base frame \(\{\mathbf{p}_r^t\}_{t=1}^T\).
+					</p>
+					<p>
+						We further retarget the human hand trajectories \(\{\mathbf{p}_r^t\}_{t=1}^T\) to the robot configuration (i.e., arm and finger joints).
+						With MINK&nbsp;<a class="cite" href="#ref-3">[3]</a>, a differentiable IK solver, at time \(t\), the human video provides fingertip positions
+						\(\{\mathbf{p}_{\mathrm{tip},k}^t\}_{k=1}^4\) as well as the wrist pose \((\mathbf{p}_{\mathrm{wrist}}^t,\mathbf{R}_{\mathrm{wrist}}^t)\). Here, each fingertip position \(\mathbf{p}_{\mathrm{tip},k}^t\) is taken directly as the corresponding MANO fingertip keypoint of finger \(k\in\{\text{thumb},\text{index},\text{middle},\text{ring}\}\), and the wrist pose is constructed from the wrist and metacarpophalangeal keypoints: the position \(\mathbf{p}_{\mathrm{wrist}}^t\) is the wrist keypoint (offset by a fixed amount to the robot's wrist link), and the orientation \(\mathbf{R}_{\mathrm{wrist}}^t\) is the frame spanned by the wrist-to-middle-knuckle axis and the palm-plane normal.
+						We solve the following inverse kinematics optimization:
+					</p>
+					<div class="eq" id="eq-1">\[
+						\begin{aligned}
+						\mathbf{q}^\ast = \arg\min_{\mathbf{q}}\; &amp; \lambda_p \sum_{k=1}^4 \Big( \| f_k^{\mathrm{pos}}(\mathbf{q}) - \mathbf{p}_{\mathrm{tip},k}^t \|_2^2 \Big) \\
+						&amp; + \lambda_{wp} \| f_{\mathrm{wrist}}^{\mathrm{pos}}(\mathbf{q}) - \mathbf{p}_{\mathrm{wrist}}^t \|_2^2 \\
+						&amp; + \lambda_{wR}\, d_R\!\big(f_{\mathrm{wrist}}^{\mathrm{rot}}(\mathbf{q}), \mathbf{R}_{\mathrm{wrist}}^t\big),
+						\end{aligned}
+						\tag{1}
+					\]</div>
+					<p>
+						where \(\mathbf{q} \in \mathbb{R}^{n}\) denotes the robot joint angles,
+						\(f_k^{\mathrm{pos}}(\mathbf{q})\) is the forward kinematics of the \(k\)-th robot fingertip,
+						\(f_{\mathrm{wrist}}^{\mathrm{pos}}(\mathbf{q})\) and \(f_{\mathrm{wrist}}^{\mathrm{rot}}(\mathbf{q})\) are the wrist position and orientation under forward kinematics,
+						and \(d_R(\cdot,\cdot)\) is the geodesic distance on \(\mathrm{SO}(3)\).
+						Joint limits and collision constraints are enforced during optimization. Finally, we apply a Gaussian smoothing filter and obtain the retargeted trajectories \(\{\mathbf{q}^t\}_{t=1}^T\).
+					</p>
+					<p>
+						<b>Object Trajectory.</b>
+						We use CoTracker&nbsp;<a class="cite" href="#ref-4">[4]</a> to track flow points on the manipulated object initialized from \(M_{i_{\mathrm{manip}}}\).
+						For interactive tasks involving object&ndash;object interactions, we also track the target object using \(M_{i_{\mathrm{target}}}\).
+						Let \(\{\mathbf{u}_{\mathrm{manip}}^t\}_{t=1}^{T}\) and \(\{\mathbf{u}_{\mathrm{target}}^t\}_{t=1}^{T}\) denote the tracked 2D flow points of the manipulated and target objects, with \(\mathbf{u}_{\cdot}^t\in\mathbb{R}^{K\times 2}\).
+						These points are lifted to 3D using depth values and transformed into the table frame, yielding \(\{\mathbf{x}_{\mathrm{manip}}^t\}_{t=1}^{T}\) and \(\{\mathbf{x}_{\mathrm{target}}^t\}_{t=1}^{T}\), where \(\mathbf{x}_{\cdot}^t\in\mathbb{R}^{K\times 3}\).
+					</p>
+
+					<h4 id="app-a-2"><span class="n">A.2</span> Refinement Modules</h4>
+
+					<h5 id="app-a-2-1"><span class="n">A.2.1</span> Keyframe Identification</h5>
+					<p>
+						We use generalized heuristics to
+						detect three key manipulation frames: the <i>contact</i>, <i>interaction</i>, and <i>detachment</i> frames, denoted by \(T_c\), \(T_i\), and \(T_d\), respectively.
+					</p>
+					<p>
+						<b>Contact frame.</b>
+						Given the manipulated-object 2D flow points \(\{\mathbf{u}_{\mathrm{manip}}^t\}_{t=1}^{T}\), we compute their centroid as \(\mathbf{c}_{\mathrm{manip}}^t=\frac{1}{K}\sum_{k=1}^{K}\mathbf{u}_{\mathrm{manip},k}^t\).
+						We then measure the displacement from the initial frame, \(d^t=\|\mathbf{c}_{\mathrm{manip}}^t-\mathbf{c}_{\mathrm{manip}}^1\|_2\), and define the motion indicator \(m^t=\mathbb{I}(d^t&gt;\delta_c)\).
+						The contact frame is detected as the earliest frame with a consecutive motion streak, i.e., \(T_c=\min\{t \mid \sum_{j=t}^{t+L_c-1}m^j=L_c\}\), where \(\delta_c=4\) and \(L_c=50\) are fixed across tasks.
+					</p>
+					<p>
+						<b>Interaction frame.</b>
+						For interactive tasks indicated by task type \(\tau\), we also track target-object flow points \(\{\mathbf{u}_{\mathrm{target}}^t\}_{t=1}^{T}\).
+						Let \(\mathbf{c}_{\mathrm{target}}^t\) be their centroid and define the relative centroid offset as \(\mathbf{r}^t=\mathbf{c}_{\mathrm{manip}}^t-\mathbf{c}_{\mathrm{target}}^t\).
+						We compute the relative motion \(s^t=\|\mathbf{r}^t-\mathbf{r}^{t-1}\|_2\), smooth it with a window size of 3, and denote the result by \(\bar{s}^t\).
+						The interaction frame is detected as \(T_i=\min\{t\geq T_c \mid \sum_{j=t}^{t+L_i-1}\mathbb{I}(\bar{s}^j&lt;\delta_i)=L_i\}\), where \(\delta_i=1.0\) and \(L_i=3\) are fixed across tasks.
+					</p>
+					<p>
+						<b>Detachment frame.</b>
+						The drop-off frame \(T_d\) is detected as the first frame after \(T_c\) where the manipulated object's height falls below 3&nbsp;cm above the table.
+					</p>
+
+					<h5 id="app-a-2-2"><span class="n">A.2.2</span> Keyframe Refinement</h5>
+					<p>Given the robot joint trajectory \(\{\mathbf{q}^t\}_{t=1}^T\), we adjust the robot hand poses at the contact frame (\(\mathbf{T}_{h}^c\)) and the interaction frame (\(\mathbf{T}_{h}^i\)). At the contact frame, we replay the retargeted trajectory in simulation to recover the raw hand&ndash;manipulated-object relative transform \(\mathbf{T}_{h\rightarrow m}^{c}\), then correct it differently for grasping and pushing/pulling. The corrected transform \(\hat{\mathbf{T}}_{h\rightarrow m}^{c}\), together with the manipulated-object pose in the table frame, yields the corrected hand pose \(\hat{\mathbf{T}}_{h}^{c}\). All quantities below are expressed in the manipulated-object frame unless otherwise noted.</p>
+					<p>
+						<b>Contact-Frame Refinement for Grasping.</b>
+						We obtain a <em>coarse</em> hand&ndash;object relative pose at the contact frame by
+						replaying the retargeted trajectory. Because this pose carries perception,
+						reconstruction, and retargeting error, we (i)&nbsp;apply a geometry-based correction
+						that depends on the grasp type and (ii)&nbsp;seed a local grasp search from the
+						corrected pose. The correction adjusts only the hand position; the demonstrated
+						orientation is preserved.
+					</p>
+					<p>
+						<em>Coarse relative-pose correction.</em>
+						Let \(\mathbf{a}_{m}\) be the hand approach axis in the object frame (whose
+						\(z\)-axis points up, away from the table) and \(\mathbf{z}_{m}^{-}=[0,0,-1]^\top\)
+						the downward axis. The grasp is a <em>top</em> grasp if the alignment
+						\(s=\mathbf{a}_{m}^\top\mathbf{z}_{m}^{-}\) exceeds \(\tau_{\mathrm{top}}\), and a
+						<em>side</em> grasp otherwise.
+					</p>
+					<p>
+						<em>Top grasps.</em> Let \(\mathbf{p}_{\mathrm{palm}}\) be the palm-center position in
+						the object frame and \(d_{xy}\) its horizontal distance to the object's vertical
+						axis. With object height \(h_{\mathrm{obj}}\) and top \(z_{\max}\), we set an adaptive
+						clearance
+						\(d_{\mathrm{top}}=\mathrm{clip}(\rho_{\mathrm{top}}\,h_{\mathrm{obj}},d_{\min},d_{\max})\)
+						and move the palm to
+					</p>
+					<div class="eq">\[
+						\mathbf{p}_{\mathrm{top}}=
+						\begin{cases}
+						[\,0,\,0,\,z_{\max}+d_{\mathrm{top}}\,]^\top, &amp; d_{xy} &gt; \tau_{xy},\\[2pt]
+						[\,x_{\mathrm{palm}},\,y_{\mathrm{palm}},\,z_{\max}+d_{\mathrm{top}}\,]^\top,
+						&amp; d_{xy} \le \tau_{xy}.
+						\end{cases}
+					\]</div>
+					<p>
+						If the palm already lies nearly above the object we fix only its height;
+						otherwise we recenter it over the object.
+					</p>
+					<p>
+						<em>Side grasps.</em> We maintain a fixed standoff
+						\(d_{\mathrm{side}}=\mathrm{clip}(d_{\mathrm{side}}^{0},d_{\min},d_{\max})\) from the
+						object. We first lift the hand to a minimum height
+						\(\rho_{\mathrm{side}}\,h_{\mathrm{obj}}\) if it sits lower, then translate it toward
+						the nearest of \(N_{s}\) sampled surface points until the hand&ndash;surface distance
+						equals \(d_{\mathrm{side}}\), capping the total translation at \(\Delta_{\max}\).
+					</p>
+					<p>
+						<em>Grasp optimization.</em>
+						We generate grasps with <em>Lightning Grasp</em>&nbsp;<a class="cite" href="#ref-5">[5]</a>, which
+						returns candidate hand&ndash;object transforms with finger configurations while
+						optimizing contact locations, solving contact inverse kinematics (IK), and
+						rejecting self- and hand&ndash;object collisions. We center its object-pose sampling
+						on the corrected relative pose, keeping the result consistent with the
+						demonstrated interaction. We then clean the candidate contact points sampled on the object surface: a
+						continuity filter drops isolated points (fewer than \(\kappa\) neighbors within
+						radius \(r\)), which removes interior artifacts of imperfect meshes where the hand
+						could penetrate the object; and we discard points low on the object (the band
+						above its lowest point) so the grasp does not place the hand low, near the table.
+						As a final safeguard we reject any grasp whose hand links fall below the table.
+					</p>
+					<p>
+						<em>Multi-attempt local sampling.</em> Each attempt draws \(R\) batches of object
+						poses around the corrected pose and keeps the best result (preferring more fingers
+						in contact, then more valid grasps); it succeeds once at least \(N_{\min}\) valid
+						grasps are found. On failure we widen the sampling range and retry, up to \(A\)
+						attempts: at attempt \(n=0,1,\dots\) the per-axis translation range is
+						\(\pm(\Delta_t^{(0)}+n\,\delta_t)\) and the rotation range about the hand's local
+						\(y\)-axis is \(\pm(\Delta_r^{(0)}+n\,\delta_r)\). The module returns
+					</p>
+					<div class="eq">\[
+						\mathcal{G}=\big\{(\mathbf{T}_{h\rightarrow m}^{(k)},\,\mathbf{q}_{h}^{(k)},\,
+						\mathbf{q}_{\mathrm{pre}}^{(k)})\big\}_{k=1}^{K},
+					\]</div>
+					<p>i.e. hand-object relative transforms, grasp configurations, and pre-grasp configurations.</p>
+					<p>
+						<em>Pre-grasp construction.</em> For each grasp we back the contact targets off the
+						surface along their outward normals,
+						\(\mathbf{p}_{j}^{\mathrm{pre}}=\mathbf{p}_{j}^{c}+\delta_{\mathrm{pre}}\,
+						\mathbf{n}_{j}^{c}\), and re-solve contact IK for the contacting fingers only (free
+						fingers keep their grasp values), yielding a configuration in which the fingers
+						hover just outside the object before closing.
+					</p>
+					<p>
+						<em>Selection by a stability test.</em> We validate the candidates in \(\mathcal{G}\)
+						in simulation: each grasp is replayed as the hand approaches, adopts its
+						pre-grasp, closes, lifts the object, and is then shaken along the three Cartesian
+						axes and in wrist rotation. A grasp is accepted if the object stays lifted by more
+						than \(\tau_{\mathrm{lift}}=6\,\mathrm{cm}\) throughout, with no hand&ndash;table contact;
+						we regenerate grasps until one is accepted, which defines the final
+						\(\hat{\mathbf{T}}_{h\rightarrow m}^{c}\) used in the contact-frame refinement.
+					</p>
+					<p>
+						<b>Contact-frame Refinement for Pushing/Pulling.</b>
+						At the contact frame \(t_c\), we refine the hand&ndash;object relative pose so the
+						selected fingertip contacts the correct side of the object and aligns with its
+						motion, using the reconstructed object mesh, the object flow, and the fingertip
+						geometry from forward kinematics.
+					</p>
+					<p>
+						<i>Object motion direction.</i>
+						From the 3D flow points at \(t_c\) and a short look-ahead frame
+						\(t_+=\min(t_c+\Delta t,\,T-1)\), we compute table-frame centroids
+						\(\mathbf{c}_{t_c}^{w}\) and \(\mathbf{c}_{t_+}^{w}\) (averaging only ID-matched
+						points when track IDs exist, otherwise all points). The motion direction in the
+						world and object frames is
+					</p>
+					<div class="eq">\[
+						\mathbf{d}_{m}^{w}
+						=
+						\frac{\mathbf{c}_{t_+}^{w}-\mathbf{c}_{t_c}^{w}}
+						{\lVert\mathbf{c}_{t_+}^{w}-\mathbf{c}_{t_c}^{w}\rVert_2},
+						\qquad
+						\mathbf{d}_{m}
+						=
+						\frac{({}^{w}\mathbf{R}_{m})^\top \mathbf{d}_{m}^{w}}
+						{\lVert({}^{w}\mathbf{R}_{m})^\top \mathbf{d}_{m}^{w}\rVert_2},
+					\]</div>
+					<p>where \({}^{w}\mathbf{R}_{m}\) is the reconstructed object orientation.</p>
+					<p>
+						<i>Fingertip geometry.</i>
+						The relative-pose file stores the palm pose in the object frame, while forward
+						kinematics uses the hand/base frame. We map the initial palm pose to the base pose
+						via the fixed URDF transform \({}^{h}\mathbf{T}_{p}\),
+						\({}^{m}\mathbf{T}_{h}^{0}={}^{m}\mathbf{T}_{p}^{0}\,({}^{h}\mathbf{T}_{p})^{-1}\),
+						and evaluate forward kinematics at the retargeted configuration to obtain the
+						contact-link origin \(\mathbf{p}_{\ell}^{h}\) and normal \(\mathbf{n}_{\ell}^{h}\)
+						in the hand/base frame (by default the middle fingertip head, local normal
+						\([-1,0,0]^\top\)).
+					</p>
+					<p>
+						<i>Selecting the active fingertip side.</i>
+						We project the motion direction onto the table plane, express it in the hand frame,
+						and score its consistency with the fingertip normal:
+					</p>
+					<div class="eq">\[
+						\hat{\mathbf{d}}_{h}
+						=
+						({}^{w}\mathbf{R}_{h})^\top
+						\frac{\Pi_{xy}(\mathbf{d}_{m}^{w})}
+						{\lVert\Pi_{xy}(\mathbf{d}_{m}^{w})\rVert_2},
+						\qquad
+						s_{\mathrm{pp}}
+						=
+						\hat{\mathbf{d}}_{h}^{\top}\,\mathbf{n}_{\ell}^{h},
+					\]</div>
+					<p>
+						with \(\Pi_{xy}([x,y,z]^\top)=[x,y,0]^\top\). If
+						\(s_{\mathrm{pp}}\le\tau_{\mathrm{pp}}\) the normal faces the wrong way, so we flip
+						it, \(\mathbf{n}_{\ell}^{h}\leftarrow-\mathbf{n}_{\ell}^{h}\); otherwise it is kept.
+						This distinguishes the pushing and pulling contact configurations.
+					</p>
+					<p>
+						<i>Choosing the contact point.</i>
+						We sample surface points from the object mesh and select a contact point on the
+						approach side. With the motion direction projected onto the object \(x\)-\(y\) plane
+						as \(\hat{\mathbf{d}}_{m}^{xy}\), the search direction follows the scene flag
+						\(b_{\mathrm{along}}\) (whether the hand moves along the object motion):
+						\(\hat{\mathbf{d}}_{\mathrm{search}}^{xy}=\hat{\mathbf{d}}_{m}^{xy}\) if
+						\(b_{\mathrm{along}}\) is true, and \(-\hat{\mathbf{d}}_{m}^{xy}\) otherwise.
+						Discarding points near the object's local \(z\)-axis, we keep points whose radial
+						direction aligns with \(\hat{\mathbf{d}}_{\mathrm{search}}^{xy}\), then keep the
+						farthest ones (above a percentile threshold) so candidates lie on the outer
+						surface. We take their mean, set its height to a normalized target
+						\((1-\alpha)\,h_{\mathrm{obj}}\), and pick the nearest sampled point as the contact
+						point \(\mathbf{p}_{\mathrm{contact}}\).
+					</p>
+					<p>
+						<i>Pose correction.</i>
+						With the contact-link normal in the object frame
+						\(\mathbf{n}_{\ell}^{m,0}={}^{m}\mathbf{R}_{h}^{0}\mathbf{n}_{\ell}^{h}\), we compute
+						a correction rotation that aligns it horizontally with the motion direction,
+						\(\mathbf{R}_{\mathrm{corr}}\,\mathbf{n}_{\ell}^{m,0}=\hat{\mathbf{d}}_{m}^{xy}\),
+						and translate the rotated fingertip origin to a target standing off from the
+						contact point,
+						\(\mathbf{p}_{\mathrm{target}}=\mathbf{p}_{\mathrm{contact}}
+						-\delta\,\hat{\mathbf{d}}_{m}^{xy}\), where \(\delta\) is a small stand-off
+						distance. Together these give the corrected base pose
+						\({}^{m}\hat{\mathbf{T}}_{h}^{c}\).
+					</p>
+					<p>
+						<b>Interaction-frame Refinement.</b>
+						We estimate the desired pose of the manipulated object at the interaction frame, \(\hat{\mathbf{T}}_{m}^{i}\), using tracked 3D flow points in the human demonstration. Combining \(\hat{\mathbf{T}}_{m}^{i}\) with the corrected contact-frame relative transform \(\hat{\mathbf{T}}_{h\rightarrow m}^{c}\) yields the desired interaction-frame end-effector pose \(\hat{\mathbf{T}}_{ee}^{i}\), together with the corresponding hand&ndash;target-object relative pose \(\hat{\mathbf{T}}_{h\rightarrow g}^{i}\). Both are passed to the motion planning module.
+					</p>
+					<p>
+						<em>Object pose estimation.</em>
+						We estimate the manipulated-object pose at any target frame \(t\), denoted \(\hat{\mathbf{T}}_{m}^{t}\), from tracked 3D flow points via closed-form rigid alignment. Given the known initial pose \(\mathbf{T}_{m}^{0}\) from scene reconstruction and 3D flow points with persistent IDs across frames, we intersect the ID sets between a source frame \(s\) and the target frame \(t\) to obtain \(N\) paired world-frame points \(\{(\mathbf{p}_i^{s}, \mathbf{p}_i^{t})\}_{i=1}^{N}\). We express the source-frame points in the object frame using the known source pose, \(\mathbf{p}_i^{o} = (\mathbf{T}_{m}^{s})^{-1} \mathbf{p}_i^{s}\), and solve
+					</p>
+					<div class="eq">\[
+						\hat{\mathbf{T}}_{m}^{t} = \arg\min_{\mathbf{T} \in SE(3)} \sum_{i=1}^{N} \big\| \mathbf{T}\,\mathbf{p}_i^{o} - \mathbf{p}_i^{t} \big\|_{2}^{2}
+					\]</div>
+					<p>in closed form via the Kabsch (SVD) algorithm. Fitting the target pose directly from object-frame to target-world points avoids the convention errors that arise when first estimating a world-space motion and then composing it with \(\mathbf{T}_{m}^{s}\). To handle tracking outliers, we wrap the fit in RANSAC: at each iteration we sample three correspondences, fit a candidate transform, and count points with residual below an inlier threshold \(\tau_r\) as inliers; the largest inlier set is then used for a final refit.</p>
+					<p>
+						<b>Trajectory Interpolation.</b>
+						With the refined keyframe hand poses and the retargeted trajectory, we segment
+						each trajectory into task-specific phases and apply DLS-based task-space
+						correction. Two operators recur throughout. All blends use the quintic smoothstep
+					</p>
+					<div class="eq" id="eq-2">\[
+						\alpha(s) = 6s^{5} - 15s^{4} + 10s^{3}, \qquad s\in[0,1],
+						\tag{2}
+					\]</div>
+					<p>
+						which has zero velocity at both ends (\(\alpha'(0)=\alpha'(1)=0\)), so motion starts
+						and stops without jumps. When the arm tracks the retargeted motion while holding
+						the palm at a target pose, we correct the seven arm joints with a damped
+						least-squares (DLS) step on the \(6\)-D palm pose error&mdash;the position error
+						together with the axis&ndash;angle of \(R^{*}R^{\top}\). At key frames we instead solve
+						exact inverse kinematics so the palm lands precisely on its target pose; these
+						anchor frames are pinned and preserved by a final smoothing pass that removes
+						residual jitter from the arm joints.
+					</p>
+					<p>
+						<i>Grasping.</i>
+						Four phases. <em>Hand-pose</em>: the arm moves to the grasp pose (reached by a
+						smoothstep-ramped DLS correction) while the fingers stay open. <em>Pre-grasp</em>:
+						the arm is fixed and the fingers blend to a pre-grasp shape. <em>Grasping</em>: the
+						arm is fixed and the fingers close to the target grasp, completing contact.
+						<em>Post-grasp tracking</em>: the arm follows the retargeted motion under DLS
+						correction. The fingers stay closed and open only when a release frame is
+						detected from the object's lifting height (e.g., for placing); tasks that keep
+						holding the object, such as pouring, have no release frame, so the fingers remain
+						closed throughout.
+					</p>
+					<p>
+						<i>Pushing/pulling.</i>
+						Three phases. The pre-push pose sits a short distance behind the push pose along
+						the push direction and shares its orientation, so the approach is a pure
+						translation. <em>Pre-contact</em>: the arm moves to the pre-push pose.
+						<em>Contact</em>: the palm is interpolated in \(SE(3)\) from the pre-push to the push
+						pose with IK at each step. <em>Post-contact tracking</em>: the arm tracks the
+						retargeted motion under DLS correction, with the palm height pinned at the contact
+						height to avoid robot-table collision. The fingers follow the retargeted motion throughout.
+					</p>
+
+					<h4 id="app-a-3"><span class="n">A.3</span> Sim-to-Real Module</h4>
+
+					<h5 id="app-a-3-1"><span class="n">A.3.1</span> Details of Distillation Learning</h5>
+					<p>
+						<b>Tasks and Models.</b>
+						We distill two task families. <em>Pushing/pulling</em> uses one object and one
+						keyframe, the <em>contact</em> pose. <em>Grasping</em> uses two objects and two
+						keyframes: a <em>contact</em> pose in the manipulated-object frame (where the hand
+						grasps) and an <em>interaction</em> pose in the target-object frame (where the
+						grasped object is brought). For grasping we train two models with identical
+						architecture and objective&mdash;a contact model from the manipulated-object cloud to
+						the contact pose, and an interaction model from the target-object cloud to the
+						interaction pose; pushing/pulling uses only the contact model. All clouds and
+						poses are in the table frame, and the simulated clouds contain only object
+						surfaces (no robot points), matching deployment, where the policy is queried once
+						before the arm enters the workspace.
+					</p>
+					<p>
+						<b>Training Data Generation.</b>
+						Each task is seeded by one human-video demonstration that gives the palm pose at
+						every keyframe in the relevant object's frame. We synthesize 2k&ndash;4k labeled
+						samples by randomizing the scene and re-deriving the labels analytically.
+					</p>
+					<p>
+						<em>Randomization.</em> Per sample we draw an object placement (in-plane translation
+						&plusmn;5&thinsp;cm per axis, yaw &plusmn;10&deg;; height fixed on the table; objects
+						perturbed independently).
+					</p>
+					<p>
+						<em>Visible cloud.</em> We pre-sample \(K{=}100\) canonical unit-scale clouds by
+						farthest-point sampling and reuse one per sample (round-robin). Each cloud is
+						scaled, transformed to the table frame by the sampled object pose, voxel
+						down-sampled (voxel size 1.0&ndash;1.7&thinsp;cm, one point per occupied voxel, for
+						size-invariant density), and reduced to the points visible from the sampled
+						camera by hidden-point removal. This yields a realistic single-view <em>partial</em>
+						cloud of variable size&mdash;hence the mask-aware network.
+					</p>
+					<p>
+						<em>Labels.</em> The contact pose is mapped to the table frame through the sampled
+						manipulated-object pose; for grasping, the interaction pose is likewise mapped
+						through the sampled target-object pose, with its in-plane translation scaled by
+						the target's size ratio (standoff height preserved). For symmetric objects we use
+						the canonical orientation so the label does not chase an unobservable yaw.
+					</p>
+					<p>
+						<b>Network Architecture.</b>
+						We use a mask-aware PointNet-style residual network. Given a cloud of \(N\) points
+						with centroid \(\mathbf{c}\) (over observed points), we center by \(\mathbf{c}\),
+						encode each point with a shared MLP (\(3 \!\to\! 64 \!\to\! 128 \!\to\! 128\),
+						ReLU), and aggregate with masked max- and mean-pooling (the mask removes batch
+						padding). The two pooled vectors and \(\mathbf{c}\) are fused to 128-d and refined
+						by two residual blocks; two heads output the translation residual
+						\(\Delta \hat{\mathbf{p}} \in \mathbb{R}^3\) and the 6D rotation
+						\(\hat{\mathbf{r}}_{6D} \in \mathbb{R}^6\), from which \(R(\hat{\mathbf{r}}_{6D})\) is
+						recovered by Gram&ndash;Schmidt and \(\hat{\mathbf{p}} = \Delta \hat{\mathbf{p}} +
+						\mathbf{c}\). The network is lightweight (\(\sim\!10^5\) parameters).
+					</p>
+					<p>
+						<b>Training.</b>
+						We use the residual pose loss from the main paper
+						(\(\lambda_{\mathrm{pos}} = \lambda_{\mathrm{rot}} = 1\)). Inputs and the target
+						\((\Delta \mathbf{p}, \mathbf{r}_{6D})\) are standardized by per-channel statistics
+						from the training split; the position term is computed in this normalized space,
+						while the rotation term stays in physical matrix space (Gram&ndash;Schmidt needs the
+						raw 6D values). During training we apply label-preserving cloud
+						augmentations&mdash;Gaussian jitter (&asymp;1&thinsp;mm, clipped at 4&thinsp;mm), point
+						dropout (up to 20%, then resampled), and shuffle&mdash;and recompute \(\mathbf{c}\)
+						afterward. We optimize with AdamW and a cosine-annealed learning rate, clip the
+						gradient norm at 1.0, and early-stop on validation position error. The
+						train/validation split is by canonical point-cloud group, so no base geometry
+						appears in both splits, preventing leakage. <a class="xref" href="#tab-3">Table&nbsp;III</a> lists
+						the main settings.
+					</p>
+
+					<figure class="paper-table kv" id="tab-3">
+						<figcaption><b>Table III.</b> Representative distillation hyperparameters.</figcaption>
+						<div class="table-scroll">
+							<table>
+								<thead>
+									<tr><th class="l" scope="col">Setting</th><th class="l" scope="col">Value</th></tr>
+								</thead>
+								<tbody>
+									<tr><td class="l">Optimizer</td><td class="l">AdamW</td></tr>
+									<tr><td class="l">Learning rate (cosine to \(10^{-6}\))</td><td class="l">\(10^{-3}\)</td></tr>
+									<tr><td class="l">Weight decay</td><td class="l">\(10^{-6}\)</td></tr>
+									<tr><td class="l">Batch size</td><td class="l">256</td></tr>
+									<tr><td class="l">Max epochs / patience</td><td class="l">1600 / 300</td></tr>
+									<tr><td class="l">Dropout</td><td class="l">0.2</td></tr>
+									<tr><td class="l">Gradient-norm clip</td><td class="l">1.0</td></tr>
+									<tr><td class="l">Loss weights \((\lambda_{\mathrm{pos}}, \lambda_{\mathrm{rot}})\)</td><td class="l">(1, 1)</td></tr>
+									<tr><td class="l">Max input points</td><td class="l">500</td></tr>
+									<tr><td class="l">Validation ratio</td><td class="l">0.15</td></tr>
+								</tbody>
+								<tbody class="sep">
+									<tr><td class="l">Point-cloud bank size \(K\)</td><td class="l">100</td></tr>
+									<tr><td class="l">Voxel size \(v\)</td><td class="l">1.0&ndash;1.7&thinsp;cm</td></tr>
+									<tr><td class="l">Jitter std / clip</td><td class="l">1&thinsp;mm / 4&thinsp;mm</td></tr>
+									<tr><td class="l">Point dropout</td><td class="l">up to 20%</td></tr>
+									<tr><td class="l">Object \(xy\) range / yaw range</td><td class="l">&plusmn;5&thinsp;cm / &plusmn;10&deg;</td></tr>
+									<tr><td class="l">Mesh-scale range</td><td class="l">[0.8, 1.2]</td></tr>
+								</tbody>
+							</table>
+						</div>
+					</figure>
+
+					<h5 id="app-a-3-2"><span class="n">A.3.2</span> Details of Residual RL Learning</h5>
+					<p>For each video demonstration, we train a residual policy on top of the optimized retargeted robot trajectory. Specifically, the policy predicts bounded joint-space corrections (clipped to a maximum magnitude of 0.06) that are applied only to the hand joints, while the arm follows the optimized reference. The policy is trained with PPO using 8,192 parallel simulated rollouts. Each PPO update collects 16 policy steps per rollout, giving 131,072 transitions per update, and optimization uses minibatches of 32,768 samples for 4 epochs. We use a discount factor of 0.99, generalized advantage estimation with parameter 0.95, PPO clipping threshold 0.1, adaptive learning rate initialized at \(10^{-4}\), and a KL target of 0.016. The actor and critic share a multilayer perceptron with hidden sizes 128, 256, 256 and ELU activations, with normalized observations, normalized value targets, normalized advantages, and mixed-precision training. The simulation runs at 60 Hz, while each policy command is held for 5 simulation steps. Rollouts terminate at the demonstration horizon or early after contact if the hand is no longer sufficiently close to the manipulated object. During training, observation, action, control gains, object scale, mass, and friction are randomized to improve robustness. A separate policy is trained for each demonstration, and the selected final checkpoints are the best runs from this sweep.</p>
+
+					<h4 id="app-a-4"><span class="n">A.4</span> Spatial Generalization Module</h4>
+					<p>Our motion planning pipeline consists of two stages: 1) collision-aware trajectory planning via Curobo&nbsp;<a class="cite" href="#ref-6">[6]</a>, and 2) trajectory filtering. Given the reconstructed scene and the new task configuration, this pipeline either generates a collision-aware trajectory or determines that no collision-free path exists.</p>
+					<p>
+						<b>Collision-aware Trajectory Planning.</b>
+						First, we randomize the position of the manipulated object, and use the relative pose at the contact step (\(\hat{\mathbf{T}}_{h\rightarrow m}^{c}\)) to generate the corresponding robot pose \(\bar{\mathbf{T}}_{h}^{c}\). Then, given the randomized pose of the interactive object, we compute the robot pose at the interaction step \(\bar{\mathbf{T}}_{h}^{i}\), via \(\hat{\mathbf{T}}_{h\rightarrow g}^{i}\). To encourage lifting after grasping, we introduce an intermediate waypoint, which is the midpoint between \(\bar{\mathbf{T}}_{h}^{c}\) and \(\bar{\mathbf{T}}_{h}^{i}\). Without this, we empirically observe that the planner may generate trajectories that slide along the table.
+					</p>
+					<p>
+						We then generate collision-free trajectories with cuRobo with the reconstructed scene in a staged manner.
+						For grasp and place tasks, it first plans an approaching trajectory that brings the hand to pose \(\bar{\mathbf{T}}_{h}^{c}\) near the object. It then plans a transporting trajectory in two consecutive parts: the first part lifts the object and moves it toward the intermediate waypoint, and the second part moves from that waypoint to the pose \(\bar{\mathbf{T}}_{h}^{i}\).
+					</p>
+					<p>However, in this procedure, the planned finger trajectories are not directly useful, as they primarily ensure collision avoidance and do not capture task-relevant finger behavior, since finger-level objectives are not supported in the planning.</p>
+					<p>For push and pull tasks, we use a simplified motion generation strategy. Only the approaching phase is planned with Curobo to bring the hand near the object. Unlike grasp-and-place tasks, no elevated waypoint or transporting trajectory is introduced. Instead, the end-effector follows a straight-line Cartesian motion at an approximately constant height above the tabletop. We empirically observe that turning motions often cause unstable push/pull behaviors and loss of contact. Therefore, rather than performing full motion planning, we directly interpolate a linear trajectory between the start and target poses and solve continuous inverse kinematics to realize the corresponding motion. For push tasks, no interactive object is involved, and the target is specified as a spatial coordinate on the tabletop.</p>
+					<p>
+						<b>Trajectory Filtering.</b>
+						We first generate finger trajectories from the optimized reference via phase interpolation over three key phases&mdash;contact, interaction, and detachment (if present)&mdash;and subsequently verify finger-level collisions.
+					</p>
+					<p>
+						In practice, the planned end-effector pose may still deviate slightly from the desired contact pose (typically around 1 cm) due to planning error, which can lead to interaction failures. After reaching the planned contact pose, we further perform a short-horizon IK refinement stage.
+						Using the current manipulated object pose together with the recorded relative contact transform \(\hat{\mathbf{T}}_{h\rightarrow m}^{c}\), we solve a short-horizon IK adjustment to align the end-effector with the desired contact pose.
+					</p>
+					<p>We then overwrite the states (i.e., robot joints and object poses) from the planned trajectory, applying the following filtering criteria: i) environment collisions caused by fingers and ii) implausible arm spinning behaviors (occasionally produced by Curobo).</p>
+					<p>
+						<b>Final Output</b>: Given the new task configuration, this module outputs the valid collision-free robot trajectory, if it exists, along with the associated object trajectory.
+					</p>
+				</section>
+
+				<!-- ------------- APPENDIX B: GEOMETRY GAP & PHYSICS GAP ------------- -->
+				<section id="appendix-b">
+					<h3><span class="app-label">Appendix B</span> Geometry Gap &amp; Physics Gap</h3>
+					<p>In this section, we characterize the geometry and physics gaps that must be addressed to enable reliable sim-to-real transfer of policies learned in a digital twin simulator. Note that both geometry randomization and physics randomization fall under the broader framework of domain randomization&nbsp;<a class="cite" href="#ref-7">[7]</a>. In this work, we explicitly separate them to highlight their distinct objectives and the different challenges they are designed to address.</p>
+
+					<h4 id="app-b-1"><span class="n">B.1</span> Geometry Gap</h4>
+					<p>
+						Let \(g\) denote the geometry parameters, including the estimated object poses in the scene, and the reconstructed object meshes. Let \(o\) denote the state observations, which may be parameterized by 6D object poses, 3D flow points, or 2D flow points.
+						Finally, let \(a\) denote the output trajectories.
+					</p>
+					<p>
+						<b>Optimization Modules in Simulation (denoted as \(\psi\)).</b>
+						Let \(\hat{g}\) denote the true scene geometry and \(\bar{g}\) the geometry estimated from perception module.
+						The keyframe optimization and motion planning modules generate actions according to
+					</p>
+					<div class="eq">\[
+						a = \psi(\bar{g}),
+					\]</div>
+					<p>
+						which depends solely on the estimated geometry rather than the true geometry.
+						Since \(\bar{g}\) may differ from \(\hat{g}\), the resulting trajectory may not be optimal when executed in the real world.
+						This discrepancy between the estimated and true geometry constitutes the <i>geometry gap</i>.
+					</p>
+					<p>
+						<b>Policy Learning.</b>
+						Let \(\phi\) denote a policy learned by distilling trajectories generated by the contact optimization and motion planning modules.
+						From a probabilistic perspective, the policy models a conditional distribution over actions given observations,
+					</p>
+					<div class="eq">\[
+						p_\phi(a \mid o, \bar{g}),
+					\]</div>
+					<p>
+						where \(o\) denotes the observation.
+						Note that because the training dataset is generated under a fixed geometry estimate \(\bar{g}\), the learned policy also implicitly conditions on this estimate.
+					</p>
+					<p>However, due to the mismatch (\(\bar{g} \neq \hat{g}\)), we aim to obtain a policy that is robust to geometry estimation errors, we instead seek a geometry-agnostic policy that depends only on the observation:</p>
+					<div class="eq">\[
+						p(a \mid o).
+					\]</div>
+					<p>From a probabilistic perspective, this corresponds to marginalizing out the geometry variable:</p>
+					<div class="eq" id="eq-3">\[
+						p(a \mid o) = \int p(a \mid o, g)\, p(g \mid o)\, dg.
+						\tag{3}
+					\]</div>
+					<p>Therefore, learning the policy \(\phi(o)\) corresponds to learning an observation-conditioned policy that marginalizes over uncertainty in the underlying geometry parameters.</p>
+					<p><b>Geometry Randomization</b>: In practice, we can approximate this marginalization using geometry randomization during data generation before policy distillation.</p>
+					<p>
+						<i>Data generation process.</i> We sample geometry parameters \(g_i \sim p(g)\) and generate trajectories using the contact optimization and motion planning modules.
+						Given the geometry parameters, observations are generated according to
+						\(o \sim p(o \mid g)\).
+						Finally, actions are produced by the planner
+						\(\psi\).
+						As a result, the collected dataset follows the joint distribution
+					</p>
+					<div class="eq">\[
+						p(o,a) = \int p(a \mid o,g)\, p(o \mid g)\, p(g)\, dg.
+					\]</div>
+					<p>
+						<i>Policy learning.</i>
+						The policy is trained using observation&ndash;action pairs \((o,a)\) sampled from this dataset, and therefore aims to approximate the conditional distribution \(p(a \mid o)\).
+					</p>
+					<p>Using the definition of conditional probability,</p>
+					<div class="eq">\[
+						p(a \mid o) = \frac{p(o,a)}{p(o)}.
+					\]</div>
+					<p>Substituting the joint distribution yields</p>
+					<div class="eq">\[
+						p(a \mid o)
+						= \frac{\int p(a \mid o,g)\, p(o \mid g)\, p(g)\, dg}{p(o)}.
+					\]</div>
+					<p>Applying Bayes' rule,</p>
+					<div class="eq">\[
+						p(g \mid o) = \frac{p(o \mid g)\, p(g)}{p(o)},
+					\]</div>
+					<p>we obtain</p>
+					<div class="eq">\[
+						p(a \mid o)
+						= \int p(a \mid o,g)\, p(g \mid o)\, dg.
+					\]</div>
+					<p>This shows that the policy trained on this generated dataset \(a = \phi(o)\) approximates the stochastic distribution \(p(a \mid o)\) (<a class="xref" href="#eq-3">Eq.&nbsp;3</a>) that implicitly marginalizes over the geometry parameters.</p>
+					<p>
+						<b>Observation Space</b>: Here, the observation model \(o \sim p(o \mid g)\) also plays a critical role in the final performance.
+						Since the dataset is generated entirely in simulation while the learned policy is deployed in the real world, the observation distribution induced by \(p(o \mid g)\) in simulation should closely match that of the real environment.
+						Otherwise, discrepancies in \(p(o \mid g)\) introduce an additional sim-to-real gap in the observation model, affecting the resulting observation&ndash;action joint distribution.
+					</p>
+					<p>Below, we show that each observation modality may introduce its own source of discrepancy due to modeling or perception artifacts.</p>
+					<p><i>6D poses:</i> The primary gap arises from pose estimation accuracy, as the raw camera observations must be processed by a separate perception network, e.g., FoundationPose&nbsp;<a class="cite" href="#ref-8">[8]</a>. The resulting errors are largely determined by the performance of that network and are difficult to control within the policy learning pipeline.</p>
+					<p><i>3D object points:</i> The main discrepancy stems from occlusion modeling. In the real world, occluded flow points often lack reliable depth measurements, whereas in simulation all 3D points can be perfectly tracked, leading to a mismatch in the observable flow structure.</p>
+					<p><i>2D object points:</i> The gap primarily originates from differences in the camera imaging model. Since 2D flow depends on the image projection, mismatches between the simulated camera model and the real camera can introduce additional errors.</p>
+					<p>In this work, we use 3D object points as policy observations. This is because for our decoupled sim-to-real approach, the distillation policy is queried before the robot hand enters the workspace, avoiding severe hand-object occlusions, which are the main source of sim-to-real discrepancy in point-cloud observations. In the case of the residual RL policy, we empirically found that the sim-to-real discrepancy does not impair real-world performance, likely because this policy primarily learns to execute local residual finger adjustments.</p>
+					<p><b>Summary</b>: The intuition for addressing the geometry gap is that the more privileged information (e.g., object poses) used to build the simulator and generate data, the larger the resulting gap. Therefore, we should rely on less privileged information (i.e., object point clouds) during policy learning for robust transferring.</p>
+
+					<h4 id="app-b-2"><span class="n">B.2</span> Physics Gap</h4>
+					<p>
+						We similarly follow the above formulation to randomize physics parameters (i.e., replace \(g\) with \(l\),
+						which denotes the physical parameters), thereby accounting for variability in factors such as mass and friction coefficients that are subject to estimation errors.
+					</p>
+				</section>
+
+				<!-- ------------ APPENDIX C: REFINEMENT BASELINE DETAILS ------------ -->
+				<section id="appendix-c">
+					<h3><span class="app-label">Appendix C</span> Refinement Baseline Details</h3>
+					<p>In this section, we detail the baselines, including detailed description, the shared reward design, and the observation and action space of each baseline.</p>
+
+					<h4 id="app-c-1"><span class="n">C.1</span> Baseline Descriptions</h4>
+					<p>To evaluate refinement strategies, we compare our approach with five recent RL-based methods:</p>
+					<ol class="enum roman">
+						<li><i>Residual RL</i>&nbsp;[<a class="cite" href="#ref-9">9</a>, <a class="cite" href="#ref-10">10</a>]: This method learns a RL policy that outputs the residual terms upon the raw retargeted trajectory, which includes the finger and arm joints.</li>
+						<li><i>Deep-mimic RL</i>&nbsp;[<a class="cite" href="#ref-11">11</a>, <a class="cite" href="#ref-12">12</a>, <a class="cite" href="#ref-13">13</a>]: Instead of restricting the RL policy to output residual corrections on the raw retargeted trajectory, this approach uses the retargeted trajectory as a reward reference and the termination condition to limit large deviations, thereby enabling the RL policy to make larger, non-residual adjustments.</li>
+						<li><i>Pre-Contact Init</i>: Inspired by&nbsp;<a class="cite" href="#ref-14">[14]</a>, this approach first initializes the robot at the pre-contact pose derived from the retargeted trajectory, and then trains an RL policy using only the object-tracking reward.</li>
+						<li><i>Opt-Pre-Contact Init</i>: Similar to <i>Pre-Contact Init</i>, this baseline initializes the robot at the optimized contact pose. However, instead of directly interpolating from the retargeted trajectory, it trains an RL policy to complete the remaining manipulation.</li>
+						<li><i>Object-only</i>: Inspired by&nbsp;<a class="cite" href="#ref-15">[15]</a>, this approach disregards the retargeted human trajectory and trains an RL policy using only the object-tracking reward.</li>
+					</ol>
+
+					<h4 id="app-c-2"><span class="n">C.2</span> Baseline Design</h4>
+					<p><b>Shared Reward Design</b>: The basic reward design is the same as in our method, including the 3D flow tracking reward and the action penalties. The auxiliary rewards further include an approaching reward, a contact reward, and a lifting reward when the task involves grasping and lifting the object. Also, both the basic and auxiliary rewards incorporate object-collision and table-clearance penalties to encourage safe behavior. To facilitate baseline training, we also introduce an early termination criterion based on the average distance between the fingertips and the object pose exceeding a threshold, as commonly used in prior work.</p>
+					<p>We further detail the observation space, action space and training procedures for each baseline.</p>
+					<p>
+						<b>Residual RL</b>: The observation space is the same as that used in our residual RL for sim-to-real transfer:
+						\(\mathbf{o}_t =
+						\left[
+						\bar{\mathbf{q}}^{\mathrm{cur}}_t,\;
+						\bar{\mathbf{q}}_{t+1},\;
+						\mathbf{c}_t,\;
+						\Delta \mathbf{x}_t,\;
+						\Delta \theta_t
+						\right]\).
+						The main differences lie in the action space and the base trajectory used during training: i) residuals are applied to the full action space, including the arm joints, as the policy must also adjust the robot pose, and ii) the base trajectory is the raw retargeted trajectory without optimization.
+					</p>
+					<p>
+						<b>Deep-Mimic RL</b>: As suggested in&nbsp;<a class="cite" href="#ref-11">[11]</a>, the observation space includes only the current robot and object states, without next-step reference robot states. Accordingly,
+						\(\mathbf{o}_t =
+						\left[
+						\bar{\mathbf{q}}^{\mathrm{cur}}_t,\;
+						\mathbf{c}_t,\;
+						\Delta \mathbf{x}_t,\;
+						\Delta \theta_t
+						\right]\).
+						The action space consists of joint-space residuals \(\delta \mathbf{q}_t\), where the control targets are computed by adding these residuals to the current joint states:
+						\(\mathbf{q}^{\mathrm{target}}_t
+						=
+						\mathbf{q}^{\mathrm{cur}}_t
+						+
+						\delta \mathbf{q}_t,\)
+						with \(\mathbf{q}^{\mathrm{cur}}_t\) denoting the current robot joint angles. During training, this baseline also introduces robot trajectory tracking rewards to encourage the policy to follow the retargeted trajectory. In addition to object&ndash;fingertip-based early termination, it further incorporates a trajectory-deviation criterion, whereby an episode is terminated if the robot joint states deviate excessively from the raw retargeted trajectory.
+					</p>
+					<p><b>Pre-Contact Init</b>: The observation and action spaces are identical to <b>Deep-Mimic RL</b>. During training, the robot states (both arm and fingers) are initialized at pre-contact states from the raw retargeted trajectory, computed as a fixed offset (i.e., \(-10\) timesteps) prior to object movement.</p>
+					<p><b>Opt-Pre-Contact Init</b>: Similar to <b>Pre-Contact Init</b>, but initialized from the optimized contact poses.</p>
+					<p><b>Object-only</b>: The observation and action spaces are identical to <b>Deep-Mimic RL</b>, with no additional initialization or early termination.</p>
+					<p>For each baseline and reward type, we use three random seeds and set the maximum training time to 10 hours, using 8192 parallel Isaac Gym environments on an A40 GPU.</p>
+				</section>
+
+				<!-- ----------- APPENDIX D: REFINEMENT EXPERIMENT DETAILS ----------- -->
+				<section id="appendix-d">
+					<h3><span class="app-label">Appendix D</span> Refinement Experiment Details</h3>
+					<p>In this section, we provide additional details and rollout results for the refinement experiments.</p>
+
+					<h4 id="app-d-1"><span class="n">D.1</span> Keyframe Refinement</h4>
+					<p>Here, we show the robot configurations at contact frame before and after refinement in <a class="xref" href="#fig-5">Fig.&nbsp;5</a>, which clearly demonstrates deviations from the intended manipulation and hinders direct replay. This highlights errors arising from inaccurate hand estimation and the remaining embodiment gap.</p>
+
+					<figure class="paper-fig" id="fig-5">
+						<a href="images/appendix/before_after_opt.webp" target="_blank" rel="noopener"><img src="images/appendix/before_after_opt.webp" width="2400" height="866" decoding="async" alt="Robot hand configurations at the contact frame before and after optimization, for all seven tasks"></a>
+						<figcaption><b>Fig. 5.</b> We compare the robot configurations at the contact frame before and after optimization, showing that the optimized configurations better align with the task intention.</figcaption>
+					</figure>
+
+					<p>We also present human hand annotation images with MANO skeletons obtained via HaMeR (see <a class="xref" href="#fig-6">Fig.&nbsp;6</a>), illustrating instances of hand self-occlusion and hand&ndash;object occlusion for each task. These artifacts help explain why the retargeted trajectories deviate from the intended manipulation.</p>
+
+					<figure class="paper-fig" id="fig-6">
+						<a href="images/appendix/hand_occlusion.webp" target="_blank" rel="noopener"><img src="images/appendix/hand_occlusion.webp" width="2400" height="823" decoding="async" alt="Estimated human hand skeletons and the corresponding retargeted robot poses at the contact frames, for all seven tasks"></a>
+						<figcaption><b>Fig. 6.</b> We show the human hand poses and the corresponding retargeted robot configurations at the contact frames, illustrating why retargeting alone is insufficient.</figcaption>
+					</figure>
+
+					<p>Additionally, for the Steak Seasoning task, the original retargeted trajectory is of relatively high quality, which explains why the residual RL baseline achieves the second-best performance on this task (shown in <a class="xref" href="#tab-5">Table&nbsp;V</a>).</p>
+
+					<h4 id="app-d-2"><span class="n">D.2</span> Evaluation Metrics</h4>
+					<p>Here, we provide detailed definitions of the task evaluation metrics.</p>
+					<p>We evaluate all methods under the same protocol. During each rollout, at every frame, we log the poses of the manipulated and target objects, the commanded joint positions \(q_t\), and the contact force on each robot link. We report four metrics: the task success rate (with a multi-stage breakdown), the safe rate, the trajectory jerk, and the finish frame.</p>
+
+					<h5 id="app-d-2-1"><span class="n">D.2.1</span> Success Rate</h5>
+					<p>
+						Each trial is scored as a binary success, and the success rate is the fraction
+						of successful trials. A trial succeeds when all of its task's conditions hold at
+						the end of the rollout; the conditions are defined per task in
+						<a class="xref" href="#tab-4">Table&nbsp;IV</a>. In brief, a grasp or pour must lift the
+						object, bring it to the correct pose relative to the target, and end with the
+						hand released (grasp) or still holding it (pour); a push must leave the object at
+						the demonstrated target pose.
+					</p>
+
+					<figure class="paper-table" id="tab-4">
+						<figcaption><b>Table IV.</b> Success conditions per task; a trial succeeds only when all of its task's conditions hold. Offsets and heights are measured in the target object's frame, and orientation error is the geodesic angle between rotations.</figcaption>
+						<div class="table-scroll">
+							<table>
+								<thead>
+									<tr><th class="l" scope="col">Task</th><th class="l" scope="col">Success conditions (all must hold)</th></tr>
+								</thead>
+								<tbody>
+									<tr><td class="l">Grasp</td><td class="l">object rises &gt; 0.05&thinsp;m above its start</td></tr>
+									<tr><td class="l"></td><td class="l">final offset from target &lt; 0.07&thinsp;m</td></tr>
+									<tr><td class="l"></td><td class="l">final height above target &lt; object height + 0.01&thinsp;m</td></tr>
+									<tr><td class="l"></td><td class="l">hand released: contact force &lt; 0.1&thinsp;N</td></tr>
+								</tbody>
+								<tbody class="sep">
+									<tr><td class="l">Pour</td><td class="l">object rises &gt; 0.05&thinsp;m above its start</td></tr>
+									<tr><td class="l"></td><td class="l">final offset from demo position &lt; 0.10&thinsp;m</td></tr>
+									<tr><td class="l"></td><td class="l">final height above target &gt; 0.10&thinsp;m</td></tr>
+									<tr><td class="l"></td><td class="l">tilted &gt; 90&deg; from upright</td></tr>
+									<tr><td class="l"></td><td class="l">hand holding: contact force &gt; 1.0&thinsp;N</td></tr>
+								</tbody>
+								<tbody class="sep">
+									<tr><td class="l">Push</td><td class="l">final position error vs. demo target &lt; 0.10&thinsp;m</td></tr>
+									<tr><td class="l"></td><td class="l">final orientation error vs. demo target &lt; 60&deg;</td></tr>
+								</tbody>
+							</table>
+						</div>
+					</figure>
+
+					<p>
+						<b><i>Multi-stage success rate.</i></b>
+						To show <em>where</em> a method fails, we further split grasping and pouring
+						success into two stages:
+					</p>
+					<div class="eq">\[
+						\text{success} \;=\;
+						\underbrace{\text{lift}}_{\text{Stage 1}} \,\wedge\,
+						\underbrace{\text{object pose} \,\wedge\, \text{hand}}_{\text{Stage 2}} .
+					\]</div>
+					<p>
+						Stage&nbsp;1 asks whether the object is lifted off the table. Stage&nbsp;2 asks whether it
+						then reaches the correct final pose (the position, height, and tilt conditions
+						in <a class="xref" href="#tab-4">Table&nbsp;IV</a>) and whether the hand condition holds. We
+						report the success rate of each stage; a trial counts as a full success only when
+						both stages pass. Pushing has no lift stage and is scored by its final pose
+						alone.
+					</p>
+
+					<h5 id="app-d-2-2"><span class="n">D.2.2</span> Safe Rate</h5>
+					<p>
+						A trial is unsafe if the robot collides with the table. At each frame we take the
+						largest contact-force magnitude over the arm links and over the hand links that
+						lie below the table top; the height gate on the hand excludes the intended
+						hand&ndash;object contact, which occurs above the table. If this force exceeds
+						20&thinsp;N at any point during the rollout, the trial is flagged as a collision. The
+						safe rate is the fraction of trials with no collision.
+					</p>
+
+					<h5 id="app-d-2-3"><span class="n">D.2.3</span> Trajectory Smoothness (Jerk)</h5>
+					<p>
+						We measure motion smoothness by the jerk (third time derivative) of the
+						commanded joint trajectory, computed by a finite difference:
+					</p>
+					<div class="eq">\[
+						j_t = \frac{q_{t+3} - 3\,q_{t+2} + 3\,q_{t+1} - q_t}{\Delta t^{3}} .
+					\]</div>
+					<p>
+						We report the root-mean-square of \(j_t\) over the rollout, computed separately for
+						the arm and the hand (they move at different scales) and averaged over trials.
+						Lower jerk means smoother motion.
+					</p>
+
+					<h5 id="app-d-2-4"><span class="n">D.2.4</span> Finish Frame</h5>
+					<p>
+						The finish frame is the settling time of the object: the first frame after which
+						its position stays within \(\epsilon = 5\)&thinsp;mm of its final value,
+					</p>
+					<div class="eq">\[
+						F = \min\{\, f : \lVert p_t - p_T \rVert &lt; \epsilon \ \text{ for all } t \ge f \,\},
+					\]</div>
+					<p>
+						where \(p_t\) is the object position at frame \(t\) and \(T\) is the last frame. A
+						smaller \(F\) means faster completion. We report the mean over successful trials
+						(failed trials have no meaningful finish time).
+					</p>
+					<p>Note that the finish frame is counted only for the sim-to-real experiments.</p>
+
+					<h4 id="app-d-3"><span class="n">D.3</span> Complete Per-task Evaluation Results</h4>
+					<p>Here, we provide the complete per-task evaluation results in Tables&nbsp;<a class="xref" href="#tab-5">V</a>, <a class="xref" href="#tab-6">VI</a>, <a class="xref" href="#tab-7">VII</a>, and <a class="xref" href="#tab-8">VIII</a>. The potential reason our method does not achieve a 100% success rate in the Steak Seasoning task (shown in <a class="xref" href="#tab-5">Table&nbsp;V</a>) is the slight variation in contact dynamics within the Isaac Gym simulator. As a result, even when tracking the same trajectory, contact outcomes can vary across runs. In some cases, these discrepancies lead to task failure due to the high sensitivity required for precise dexterous grasping. Such failures could be further mitigated by incorporating the policy learning module to improve robustness.</p>
+
+					<figure class="paper-table wide t-success" id="tab-5">
+						<figcaption><b>Table V.</b> <b>Task success rates across refinement baselines.</b> For the four multi-stage tasks, we report Lift, Object Pose, and Overall success; for the remaining tasks, we report Overall success only. The final column reports the average Overall success across all seven tasks. Higher is better. Cells show mean \(\pm\) sample std across seeds for baselines.</figcaption>
+						<div class="table-scroll">
+							<table>
+								<thead>
+									<tr>
+										<th rowspan="2" class="l" scope="col">Method</th>
+										<th colspan="3" scope="colgroup"><span class="grp">Apple Prep.</span></th>
+										<th colspan="3" scope="colgroup"><span class="grp">Peach Prep.</span></th>
+										<th colspan="3" scope="colgroup"><span class="grp">Steak Season.</span></th>
+										<th colspan="3" scope="colgroup"><span class="grp">Toy Rearr.</span></th>
+										<th scope="col"><span class="grp">Tissue Box</span></th>
+										<th scope="col"><span class="grp">Book Pass.</span></th>
+										<th scope="col"><span class="grp">Tray Retr.</span></th>
+										<th scope="col"><span class="grp">Avg.</span></th>
+									</tr>
+									<tr>
+										<th scope="col">Lift</th><th scope="col">Obj.</th><th scope="col">Succ.</th>
+										<th scope="col">Lift</th><th scope="col">Obj.</th><th scope="col">Succ.</th>
+										<th scope="col">Lift</th><th scope="col">Obj.</th><th scope="col">Succ.</th>
+										<th scope="col">Lift</th><th scope="col">Obj.</th><th scope="col">Succ.</th>
+										<th scope="col">Succ.</th><th scope="col">Succ.</th><th scope="col">Succ.</th><th scope="col">Succ.</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr><th scope="row">Residual RL (Flow)</th><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>66.7<small>&plusmn;57.7</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td class="second">66.7<small>&plusmn;57.7</small></td><td class="second">66.7<small>&plusmn;57.7</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td>80.0<small>&plusmn;17.3</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td>49.5<small>&plusmn;47.7</small></td></tr>
+									<tr><th scope="row">Residual RL (Flow + Aux)</th><td>46.7<small>&plusmn;47.3</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>66.7<small>&plusmn;57.7</small></td><td class="second">33.3<small>&plusmn;57.7</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td class="best">86.7<small>&plusmn;23.1</small></td><td class="best">86.7<small>&plusmn;23.1</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td class="second">83.3<small>&plusmn;28.9</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td class="second">52.9<small>&plusmn;49.8</small></td></tr>
+									<tr><th scope="row">Deep-mimic RL (Flow)</th><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="second">93.3<small>&plusmn;11.5</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>66.7<small>&plusmn;57.7</small></td><td class="second">70.0<small>&plusmn;52.0</small></td><td>19.5<small>&plusmn;33.4</small></td></tr>
+									<tr><th scope="row">Deep-mimic RL (Flow + Aux)</th><td>6.7<small>&plusmn;5.8</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td>3.3<small>&plusmn;5.8</small></td><td>3.3<small>&plusmn;5.8</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td>66.7<small>&plusmn;57.7</small></td><td>24.3<small>&plusmn;41.5</small></td></tr>
+									<tr><th scope="row">Pre-Contact Init (Flow)</th><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>6.7<small>&plusmn;11.5</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>10.0<small>&plusmn;17.3</small></td><td>33.3<small>&plusmn;57.7</small></td><td>6.2<small>&plusmn;12.5</small></td></tr>
+									<tr><th scope="row">Pre-Contact Init (Flow + Aux)</th><td class="second">66.7<small>&plusmn;35.1</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>46.7<small>&plusmn;47.3</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>73.3<small>&plusmn;37.9</small></td><td>3.3<small>&plusmn;5.8</small></td><td>3.3<small>&plusmn;5.8</small></td><td class="second">6.7<small>&plusmn;11.5</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>33.3<small>&plusmn;57.7</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td>19.5<small>&plusmn;37.5</small></td></tr>
+									<tr><th scope="row">Opt-Pre-Contact Init (Flow)</th><td>36.7<small>&plusmn;55.1</small></td><td>33.3<small>&plusmn;57.7</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="second">80.0<small>&plusmn;34.6</small></td><td class="second">33.3<small>&plusmn;57.7</small></td><td class="second">6.7<small>&plusmn;11.5</small></td><td>66.7<small>&plusmn;57.7</small></td><td>3.3<small>&plusmn;5.8</small></td><td>3.3<small>&plusmn;5.8</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>3.3<small>&plusmn;5.8</small></td><td>1.9<small>&plusmn;2.6</small></td></tr>
+									<tr><th scope="row">Opt-Pre-Contact Init (Flow + Aux)</th><td class="best">100.0<small>&plusmn;0.0</small></td><td class="second">53.3<small>&plusmn;50.3</small></td><td>0.0<small>&plusmn;0.0</small></td><td>36.7<small>&plusmn;55.1</small></td><td class="second">33.3<small>&plusmn;57.7</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td class="second">86.7<small>&plusmn;23.1</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>33.3<small>&plusmn;57.7</small></td><td>66.7<small>&plusmn;57.7</small></td><td>14.3<small>&plusmn;26.2</small></td></tr>
+									<tr><th scope="row">Object-only (Flow)</th><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>66.7<small>&plusmn;57.7</small></td><td>0.0<small>&plusmn;0.0</small></td><td>9.5<small>&plusmn;25.2</small></td></tr>
+									<tr><th scope="row">Object-only (Flow + Aux)</th><td>43.3<small>&plusmn;35.1</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>20.0<small>&plusmn;26.5</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>6.7<small>&plusmn;11.5</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="second">53.3<small>&plusmn;50.3</small></td><td>56.7<small>&plusmn;51.3</small></td><td>0.0<small>&plusmn;0.0</small></td><td>15.7<small>&plusmn;26.9</small></td></tr>
+									<tr class="ours"><th scope="row">Ours</th><td class="best">100.0</td><td class="best">100.0</td><td class="best">100.0</td><td class="best">100.0</td><td class="best">100.0</td><td class="best">100.0</td><td>60.0</td><td>40.0</td><td>40.0</td><td class="best">100.0</td><td class="best">100.0</td><td class="best">100.0</td><td class="best">100.0</td><td class="best">100.0</td><td class="best">100.0</td><td class="best">91.4<small>&plusmn;22.7</small></td></tr>
+								</tbody>
+							</table>
+						</div>
+						<p class="table-note">Bold: best. Underlined: second best. Small grey figures: \(\pm\) sample standard deviation.</p>
+					</figure>
+
+					<figure class="paper-table wide" id="tab-6">
+						<figcaption><b>Table VI.</b> <b>Safety rates across refinement baselines.</b> Higher is better. The final column reports the average across all seven tasks. Cells show mean \(\pm\) sample std across seeds for baselines.</figcaption>
+						<div class="table-scroll">
+							<table>
+								<thead>
+									<tr><th class="l" scope="col">Method</th><th scope="col">Apple Prep.</th><th scope="col">Peach Prep.</th><th scope="col">Steak Season.</th><th scope="col">Toy Rearr.</th><th scope="col">Tissue Box</th><th scope="col">Book Pass.</th><th scope="col">Tray Retr.</th><th scope="col">Avg.</th></tr>
+								</thead>
+								<tbody>
+									<tr><th scope="row">Residual RL (Flow)</th><td>0.0<small>&plusmn;0.0</small></td><td>33.3<small>&plusmn;57.7</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td class="second">66.7<small>&plusmn;57.7</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td>42.9<small>&plusmn;46.0</small></td></tr>
+									<tr><th scope="row">Residual RL (Flow + Aux)</th><td>3.3<small>&plusmn;5.8</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td>29.0<small>&plusmn;48.5</small></td></tr>
+									<tr><th scope="row">Deep-mimic RL (Flow)</th><td class="best">100.0<small>&plusmn;0.0</small></td><td>66.7<small>&plusmn;57.7</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="second">33.3<small>&plusmn;57.7</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td class="second">66.7<small>&plusmn;57.7</small></td><td>16.7<small>&plusmn;28.9</small></td><td>54.8<small>&plusmn;39.3</small></td></tr>
+									<tr><th scope="row">Deep-mimic RL (Flow + Aux)</th><td>0.0<small>&plusmn;0.0</small></td><td class="second">96.7<small>&plusmn;5.8</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td class="second">66.7<small>&plusmn;57.7</small></td><td>33.3<small>&plusmn;57.7</small></td><td class="second">56.7<small>&plusmn;45.5</small></td></tr>
+									<tr><th scope="row">Pre-Contact Init (Flow)</th><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td>60.0<small>&plusmn;52.9</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td>37.1<small>&plusmn;48.2</small></td></tr>
+									<tr><th scope="row">Pre-Contact Init (Flow + Aux)</th><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>14.3<small>&plusmn;37.8</small></td></tr>
+									<tr><th scope="row">Opt-Pre-Contact Init (Flow)</th><td class="second">66.7<small>&plusmn;57.7</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="second">30.0<small>&plusmn;52.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="best">100.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>36.7<small>&plusmn;55.1</small></td><td>33.3<small>&plusmn;38.5</small></td></tr>
+									<tr><th scope="row">Opt-Pre-Contact Init (Flow + Aux)</th><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="second">66.7<small>&plusmn;57.7</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="second">50.0<small>&plusmn;50.0</small></td><td>16.7<small>&plusmn;28.9</small></td></tr>
+									<tr><th scope="row">Object-only (Flow)</th><td>33.3<small>&plusmn;57.7</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>30.0<small>&plusmn;30.0</small></td><td>33.3<small>&plusmn;57.7</small></td><td>13.8<small>&plusmn;17.3</small></td></tr>
+									<tr><th scope="row">Object-only (Flow + Aux)</th><td>36.7<small>&plusmn;35.1</small></td><td>0.0<small>&plusmn;0.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td class="second">33.3<small>&plusmn;57.7</small></td><td>50.0<small>&plusmn;50.0</small></td><td>0.0<small>&plusmn;0.0</small></td><td>3.3<small>&plusmn;5.8</small></td><td>17.6<small>&plusmn;21.6</small></td></tr>
+									<tr class="ours"><th scope="row">Ours</th><td class="best">100.0</td><td class="best">100.0</td><td class="best">100.0</td><td class="best">100.0</td><td class="best">100.0</td><td class="best">100.0</td><td class="best">100.0</td><td class="best">100.0<small>&plusmn;0.0</small></td></tr>
+								</tbody>
+							</table>
+						</div>
+					</figure>
+
+					<figure class="paper-table wide" id="tab-7">
+						<figcaption><b>Table VII.</b> <b>Arm RMS jerk across refinement baselines.</b> Motion smoothness is measured as RMS jerk from the commanded joint trajectory for the arm DOFs. Lower values indicate smoother trajectories. Baseline entries show mean \(\pm\) sample standard deviation over three seeds; Avg. reports mean \(\pm\) sample standard deviation over seven task-level means.</figcaption>
+						<div class="table-scroll">
+							<table>
+								<thead>
+									<tr><th class="l" scope="col">Method</th><th scope="col">Apple Prep.</th><th scope="col">Peach Prep.</th><th scope="col">Steak Season.</th><th scope="col">Toy Rearr.</th><th scope="col">Tissue Box</th><th scope="col">Book Pass.</th><th scope="col">Tray Retr.</th><th scope="col">Avg.</th></tr>
+								</thead>
+								<tbody>
+									<tr><th scope="row">Residual RL (Flow)</th><td>17.043<small>&plusmn;10.208</small></td><td>48.649<small>&plusmn;21.869</small></td><td>23.978<small>&plusmn;10.860</small></td><td>32.532<small>&plusmn;24.950</small></td><td>20.643<small>&plusmn;9.443</small></td><td>114.881<small>&plusmn;57.488</small></td><td>21.733<small>&plusmn;4.381</small></td><td>39.923<small>&plusmn;34.713</small></td></tr>
+									<tr><th scope="row">Residual RL (Flow + Aux)</th><td>27.104<small>&plusmn;12.419</small></td><td>69.648<small>&plusmn;6.310</small></td><td>43.636<small>&plusmn;20.289</small></td><td>28.720<small>&plusmn;4.358</small></td><td>33.837<small>&plusmn;19.455</small></td><td>181.780<small>&plusmn;82.265</small></td><td>25.494<small>&plusmn;1.819</small></td><td>58.603<small>&plusmn;56.441</small></td></tr>
+									<tr><th scope="row">Deep-mimic RL (Flow)</th><td>17.031<small>&plusmn;6.490</small></td><td>7.436<small>&plusmn;3.625</small></td><td class="best">2.132<small>&plusmn;1.178</small></td><td class="best">2.940<small>&plusmn;1.708</small></td><td>4.857<small>&plusmn;0.739</small></td><td>7.566<small>&plusmn;3.042</small></td><td>129.924<small>&plusmn;204.111</small></td><td class="second">24.555<small>&plusmn;46.724</small></td></tr>
+									<tr><th scope="row">Deep-mimic RL (Flow + Aux)</th><td>173.126<small>&plusmn;278.012</small></td><td class="second">7.321<small>&plusmn;1.652</small></td><td class="second">2.426<small>&plusmn;0.913</small></td><td>12.401<small>&plusmn;16.918</small></td><td class="second">3.435<small>&plusmn;1.734</small></td><td class="second">4.202<small>&plusmn;1.391</small></td><td class="second">5.890<small>&plusmn;3.271</small></td><td>29.829<small>&plusmn;63.274</small></td></tr>
+									<tr><th scope="row">Pre-Contact Init (Flow)</th><td>761.718<small>&plusmn;1275.098</small></td><td>20.786<small>&plusmn;2.153</small></td><td>36.976<small>&plusmn;9.782</small></td><td>60.184<small>&plusmn;29.968</small></td><td>25.623<small>&plusmn;27.822</small></td><td>81.888<small>&plusmn;57.548</small></td><td>17.918<small>&plusmn;7.749</small></td><td>143.585<small>&plusmn;273.558</small></td></tr>
+									<tr><th scope="row">Pre-Contact Init (Flow + Aux)</th><td>40.669<small>&plusmn;19.137</small></td><td>54.429<small>&plusmn;7.793</small></td><td>33.157<small>&plusmn;12.670</small></td><td>164.592<small>&plusmn;187.589</small></td><td>621.802<small>&plusmn;1055.918</small></td><td>242.401<small>&plusmn;364.162</small></td><td>26.260<small>&plusmn;4.901</small></td><td>169.044<small>&plusmn;215.585</small></td></tr>
+									<tr><th scope="row">Opt-Pre-Contact Init (Flow)</th><td class="second">15.828<small>&plusmn;5.009</small></td><td>27.593<small>&plusmn;4.817</small></td><td>17.521<small>&plusmn;3.109</small></td><td>29.150<small>&plusmn;0.875</small></td><td>612.473<small>&plusmn;1012.000</small></td><td>625.472<small>&plusmn;1038.066</small></td><td>925.043<small>&plusmn;895.925</small></td><td>321.868<small>&plusmn;387.087</small></td></tr>
+									<tr><th scope="row">Opt-Pre-Contact Init (Flow + Aux)</th><td>38.240<small>&plusmn;13.398</small></td><td>31.017<small>&plusmn;17.968</small></td><td>27.967<small>&plusmn;3.519</small></td><td>40.200<small>&plusmn;8.071</small></td><td>10.967<small>&plusmn;8.366</small></td><td>937.894<small>&plusmn;899.774</small></td><td>1018.025<small>&plusmn;861.695</small></td><td>300.616<small>&plusmn;463.389</small></td></tr>
+									<tr><th scope="row">Object-only (Flow)</th><td>1410.388<small>&plusmn;1225.379</small></td><td>3057.588<small>&plusmn;245.780</small></td><td>4.809<small>&plusmn;5.216</small></td><td>1106.043<small>&plusmn;944.973</small></td><td>883.106<small>&plusmn;1489.059</small></td><td>1064.386<small>&plusmn;909.990</small></td><td>544.880<small>&plusmn;912.903</small></td><td>1153.029<small>&plusmn;954.355</small></td></tr>
+									<tr><th scope="row">Object-only (Flow + Aux)</th><td>323.554<small>&plusmn;413.084</small></td><td>595.318<small>&plusmn;1000.819</small></td><td>10.465<small>&plusmn;8.078</small></td><td>558.383<small>&plusmn;939.635</small></td><td>129.711<small>&plusmn;196.062</small></td><td>977.774<small>&plusmn;1157.390</small></td><td>1065.747<small>&plusmn;899.920</small></td><td>522.993<small>&plusmn;401.045</small></td></tr>
+									<tr class="ours"><th scope="row">Ours</th><td class="best">10.285</td><td class="best">4.086</td><td>4.222</td><td class="second">5.934</td><td class="best">0.447</td><td class="best">0.417</td><td class="best">0.251</td><td class="best">3.663<small>&plusmn;3.697</small></td></tr>
+								</tbody>
+							</table>
+						</div>
+					</figure>
+
+					<figure class="paper-table wide" id="tab-8">
+						<figcaption><b>Table VIII.</b> <b>Hand RMS jerk across refinement baselines.</b> Motion smoothness is measured as RMS jerk from the commanded joint trajectory for the hand DOFs. Lower values indicate smoother trajectories. Baseline entries show mean \(\pm\) sample standard deviation over three seeds; Avg. reports mean \(\pm\) sample standard deviation over seven task-level means.</figcaption>
+						<div class="table-scroll">
+							<table>
+								<thead>
+									<tr><th class="l" scope="col">Method</th><th scope="col">Apple Prep.</th><th scope="col">Peach Prep.</th><th scope="col">Steak Season.</th><th scope="col">Toy Rearr.</th><th scope="col">Tissue Box</th><th scope="col">Book Pass.</th><th scope="col">Tray Retr.</th><th scope="col">Avg.</th></tr>
+								</thead>
+								<tbody>
+									<tr><th scope="row">Residual RL (Flow)</th><td>22.176<small>&plusmn;16.010</small></td><td>38.982<small>&plusmn;23.652</small></td><td>26.756<small>&plusmn;10.736</small></td><td>32.401<small>&plusmn;24.587</small></td><td>18.779<small>&plusmn;3.325</small></td><td>104.741<small>&plusmn;71.100</small></td><td>23.507<small>&plusmn;1.110</small></td><td>38.192<small>&plusmn;30.119</small></td></tr>
+									<tr><th scope="row">Residual RL (Flow + Aux)</th><td>33.869<small>&plusmn;10.659</small></td><td>95.008<small>&plusmn;18.242</small></td><td>46.807<small>&plusmn;20.790</small></td><td>27.440<small>&plusmn;3.409</small></td><td>22.213<small>&plusmn;6.541</small></td><td>131.850<small>&plusmn;63.450</small></td><td>30.668<small>&plusmn;8.197</small></td><td>55.408<small>&plusmn;41.725</small></td></tr>
+									<tr><th scope="row">Deep-mimic RL (Flow)</th><td>314.524<small>&plusmn;194.161</small></td><td class="second">8.052<small>&plusmn;8.175</small></td><td>8.426<small>&plusmn;2.692</small></td><td class="best">6.679<small>&plusmn;3.085</small></td><td>11.874<small>&plusmn;3.933</small></td><td>6.992<small>&plusmn;5.758</small></td><td>255.311<small>&plusmn;350.019</small></td><td>87.408<small>&plusmn;136.014</small></td></tr>
+									<tr><th scope="row">Deep-mimic RL (Flow + Aux)</th><td>202.673<small>&plusmn;210.847</small></td><td class="best">5.464<small>&plusmn;1.825</small></td><td>8.678<small>&plusmn;2.313</small></td><td>197.901<small>&plusmn;296.329</small></td><td class="second">8.318<small>&plusmn;1.280</small></td><td class="second">5.756<small>&plusmn;1.509</small></td><td>18.014<small>&plusmn;11.749</small></td><td>63.829<small>&plusmn;93.322</small></td></tr>
+									<tr><th scope="row">Pre-Contact Init (Flow)</th><td>34.787<small>&plusmn;7.608</small></td><td>11.563<small>&plusmn;6.505</small></td><td>28.986<small>&plusmn;8.490</small></td><td>42.586<small>&plusmn;17.338</small></td><td>14.358<small>&plusmn;16.966</small></td><td>30.687<small>&plusmn;12.170</small></td><td class="second">14.753<small>&plusmn;10.812</small></td><td>25.389<small>&plusmn;11.910</small></td></tr>
+									<tr><th scope="row">Pre-Contact Init (Flow + Aux)</th><td>36.524<small>&plusmn;16.367</small></td><td>31.980<small>&plusmn;2.320</small></td><td>23.986<small>&plusmn;6.268</small></td><td>133.047<small>&plusmn;146.977</small></td><td>10.310<small>&plusmn;4.225</small></td><td>36.367<small>&plusmn;26.230</small></td><td>21.562<small>&plusmn;5.775</small></td><td>41.968<small>&plusmn;41.228</small></td></tr>
+									<tr><th scope="row">Opt-Pre-Contact Init (Flow)</th><td class="second">12.111<small>&plusmn;7.687</small></td><td>26.104<small>&plusmn;4.015</small></td><td>11.832<small>&plusmn;1.782</small></td><td>28.139<small>&plusmn;4.926</small></td><td>21.659<small>&plusmn;6.958</small></td><td>37.447<small>&plusmn;23.724</small></td><td>19.908<small>&plusmn;17.176</small></td><td>22.457<small>&plusmn;9.104</small></td></tr>
+									<tr><th scope="row">Opt-Pre-Contact Init (Flow + Aux)</th><td>28.917<small>&plusmn;7.466</small></td><td>29.137<small>&plusmn;5.430</small></td><td>19.092<small>&plusmn;4.451</small></td><td>48.108<small>&plusmn;4.837</small></td><td>9.470<small>&plusmn;7.719</small></td><td>34.364<small>&plusmn;26.520</small></td><td>31.336<small>&plusmn;16.650</small></td><td>28.632<small>&plusmn;12.097</small></td></tr>
+									<tr><th scope="row">Object-only (Flow)</th><td class="best">8.725<small>&plusmn;4.754</small></td><td>11.369<small>&plusmn;0.255</small></td><td class="second">8.264<small>&plusmn;4.932</small></td><td>12.904<small>&plusmn;3.791</small></td><td>17.490<small>&plusmn;3.138</small></td><td>13.574<small>&plusmn;2.026</small></td><td>23.563<small>&plusmn;8.779</small></td><td class="second">13.698<small>&plusmn;5.354</small></td></tr>
+									<tr><th scope="row">Object-only (Flow + Aux)</th><td>21.164<small>&plusmn;7.107</small></td><td>20.419<small>&plusmn;6.671</small></td><td>14.644<small>&plusmn;5.232</small></td><td>15.543<small>&plusmn;8.902</small></td><td>19.421<small>&plusmn;2.983</small></td><td>15.714<small>&plusmn;3.715</small></td><td>28.735<small>&plusmn;9.585</small></td><td>19.377<small>&plusmn;4.871</small></td></tr>
+									<tr class="ours"><th scope="row">Ours</th><td>16.402</td><td>8.349</td><td class="best">3.076</td><td class="second">11.570</td><td class="best">0.122</td><td class="best">0.122</td><td class="best">0.140</td><td class="best">5.683<small>&plusmn;6.533</small></td></tr>
+								</tbody>
+							</table>
+						</div>
+					</figure>
+
+					<h4 id="app-d-4"><span class="n">D.4</span> Qualitative Results of Baseline Rollouts</h4>
+					<p>We provide examples of unsafe or unnatural behaviors produced by RL-based refinement baselines in <a class="xref" href="#fig-7">Fig.&nbsp;7</a>. These results suggest that RL-based methods tend to produce unsafe behaviors, or at least require substantially more reward and termination shaping, which introduces additional human knowledge to discourage such behaviors.</p>
+
+					<figure class="paper-fig" id="fig-7">
+						<a href="images/appendix/refinement_baseline_weird_behaviour.webp" target="_blank" rel="noopener"><img src="images/appendix/refinement_baseline_weird_behaviour.webp" width="2400" height="439" decoding="async" alt="Two simulation snapshots of unsafe or unnatural learned behavior for each of the ten RL-based refinement baselines"></a>
+						<figcaption><b>Fig. 7.</b> For each baseline, we show two qualitative snapshots of learned unsafe or unnatural behaviors. These examples help explain the lower task success rates, lower safety rates, and higher jerk observed for the baselines.</figcaption>
+					</figure>
+				</section>
+
+				<!-- ----------- APPENDIX E: SIM-TO-REAL EXPERIMENT DETAILS ----------- -->
+				<section id="appendix-e">
+					<h3><span class="app-label">Appendix E</span> Sim-to-Real Experiment Details</h3>
+					<p>In this section, we provide additional details and rollout results for the sim-to-real experiments.</p>
+
+					<h4 id="app-e-1"><span class="n">E.1</span> Baseline Details</h4>
+					<p>We compare it with three commonly used sim-to-real baselines:</p>
+					<ol class="enum roman">
+						<li><i>Pure-RL</i>: where we learn a residual RL policy on top of the optimized robot trajectories (rather than the raw retargeted ones) under all randomizations, including both geometry and physics. We consider both finger-only and full action-space variants, as adapting to locally varying object poses may require arm adjustments (unlike our approach, which adjusts the base trajectory via a separate IL policy).</li>
+						<li><i>Pure-IL</i>&nbsp;<a class="cite" href="#ref-16">[16]</a>: where we generate successful trajectories under all randomizations, record the corresponding observation&ndash;action sequences, and use DP3&nbsp;<a class="cite" href="#ref-17">[17]</a> for policy distillation. To ensure successful grasping with randomized object meshes, we heuristically adjust the finger trajectories instead of re-running grasp optimization, as suggested in&nbsp;<a class="cite" href="#ref-16">[16]</a>.</li>
+						<li><i>FoundationPose</i>: In this setting, we use the reconstructed mesh together with FoundationPose&nbsp;<a class="cite" href="#ref-8">[8]</a> to estimate the object pose in the table frame, adjust the robot pose at keyframes accordingly and obtain the new optimized robot trajectories. This baseline represents a straightforward pipeline that leverages another pre-trained pose estimation model together with SAM3D's reconstructed meshes for real-world manipulation&nbsp;<a class="cite" href="#ref-9">[9]</a>. This baseline reflects an approach that relies on the accuracy of powerful pre-trained models, rather than performing deployment-time error correction through policy distillation.</li>
+					</ol>
+
+					<h4 id="app-e-2"><span class="n">E.2</span> Test-set Randomization in Simulation</h4>
+					<p>
+						Each task is evaluated on a held-out test set of \(N{=}50\) randomized scene
+						configurations. Every configuration perturbs the
+						reconstructed scene by (i) translating each object by an in-plane offset whose
+						\(x\) and \(y\) components are sampled independently from \(\mathcal{U}(-\Delta_{xy},
+						+\Delta_{xy})\) (object height is fixed); (ii) rotating it about its local
+						vertical (\(z\)) axis by \(\Delta_\psi \sim \mathcal{U}(-\psi_{\max}, +\psi_{\max})\); and
+						(iii) rescaling its mesh by an isotropic factor \(s \sim \mathcal{U}(s_{\min},
+						s_{\max})\). For the
+						grasping tasks the manipulated and target objects are randomized
+						independently (the target's scale is fixed at 1.0). We report the per-task ranges in Tables&nbsp;<a class="xref" href="#tab-9">IX</a> and&nbsp;<a class="xref" href="#tab-10">X</a>.
+					</p>
+
+					<figure class="paper-table" id="tab-9">
+						<figcaption><b>Table IX.</b> Test-set randomization ranges for the grasping tasks. Position offsets are reported as the half-range \(\Delta_{xy}\); yaw as the half-range \(\psi_{\max}\) about the object's local vertical axis; scale as the uniform interval \([s_{\min}, s_{\max}]\).</figcaption>
+						<div class="table-scroll">
+							<table>
+								<thead>
+									<tr>
+										<th rowspan="2" class="l" scope="col">Task</th>
+										<th rowspan="2" class="l" scope="col">Objects</th>
+										<th colspan="3" scope="colgroup"><span class="grp">Manipulated object</span></th>
+										<th colspan="3" scope="colgroup"><span class="grp">Target object</span></th>
+									</tr>
+									<tr>
+										<th scope="col">\(\Delta_{xy}\)</th><th scope="col">\(\psi_{\max}\)</th><th scope="col">scale</th>
+										<th scope="col">\(\Delta_{xy}\)</th><th scope="col">\(\psi_{\max}\)</th><th scope="col">scale</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr><td class="l">Apple preparing</td><td class="l">apple &rarr; bowl</td><td>5&thinsp;cm</td><td>10&deg;</td><td>[0.8, 1.0]</td><td>5&thinsp;cm</td><td>10&deg;</td><td>1.0</td></tr>
+									<tr><td class="l">Peach preparing</td><td class="l">peach &rarr; bowl</td><td>5&thinsp;cm</td><td>10&deg;</td><td>[0.8, 1.0]</td><td>5&thinsp;cm</td><td>10&deg;</td><td>1.0</td></tr>
+									<tr><td class="l">Steak seasoning</td><td class="l">spice jar &rarr; pan</td><td>2&thinsp;cm</td><td>10&deg;</td><td>[0.9, 1.0]</td><td>5&thinsp;cm</td><td>10&deg;</td><td>1.0</td></tr>
+									<tr><td class="l">Toy arrangement</td><td class="l">toy &rarr; bowl</td><td>0.5&thinsp;cm</td><td>0&deg;</td><td>[0.9, 1.0]</td><td>5&thinsp;cm</td><td>10&deg;</td><td>1.0</td></tr>
+								</tbody>
+							</table>
+						</div>
+					</figure>
+
+					<figure class="paper-table" id="tab-10">
+						<figcaption><b>Table X.</b> Test-set randomization ranges for the pushing/pulling tasks.</figcaption>
+						<div class="table-scroll">
+							<table>
+								<thead>
+									<tr><th class="l" scope="col">Task</th><th class="l" scope="col">Object</th><th scope="col">\(\Delta_{xy}\)</th><th scope="col">\(\psi_{\max}\)</th><th scope="col">scale</th></tr>
+								</thead>
+								<tbody>
+									<tr><td class="l">Tissue box sharing</td><td class="l">pink tissue box</td><td>5&thinsp;cm</td><td>0&deg;</td><td>[0.9, 1.0]</td></tr>
+									<tr><td class="l">Book passing</td><td class="l">black book</td><td>5&thinsp;cm</td><td>0&deg;</td><td>[0.9, 1.0]</td></tr>
+									<tr><td class="l">Tray retrieval</td><td class="l">white container</td><td>5&thinsp;cm</td><td>0&deg;</td><td>[0.9, 1.0]</td></tr>
+								</tbody>
+							</table>
+						</div>
+					</figure>
+
+					<h4 id="app-e-3"><span class="n">E.3</span> Multi-stage Per-task Task Success Rate</h4>
+					<p>Here, we show the multi-stage per-task task success rate over <i>Pure IL</i>, <i>Pure RL</i>, and our method.</p>
+
+					<figure class="paper-fig" id="fig-8">
+						<a href="images/appendix/sim_to_real_result_per_task.webp" target="_blank" rel="noopener"><img src="images/appendix/sim_to_real_result_per_task.webp" width="2400" height="620" decoding="async" alt="Bar chart of multi-stage task success rates per task for Pure IL, Pure RL (finger), Pure RL (arm+finger) and our decoupled IL + RL method"></a>
+						<figcaption><b>Fig. 8.</b> Multi-stage per-task task success rates under identical randomized parameters.</figcaption>
+					</figure>
+
+					<p>From the results in <a class="xref" href="#fig-8">Fig.&nbsp;8</a>, we observe that our method consistently performs comparably to or better than the baselines. The only exception is the toy arrangement task, where <i>Pure RL (finger)</i> significantly outperforms the other methods. We conjecture that this is because the object is small, so finger-level adaptation alone is sufficient to handle slight object pose variations without arm adaptation. However, for tasks that require arm-level adaptation, such as peach preparation and steak seasoning, this strategy is insufficient.</p>
+
+					<h4 id="app-e-4"><span class="n">E.4</span> Real-World Evaluation Range</h4>
+					<p><a class="xref" href="#fig-9">Fig.&nbsp;9</a> visualizes the 10 different object pose variations used to evaluate the robustness of the learned sim-to-real policies for each manipulation task.</p>
+
+					<figure class="paper-fig" id="fig-9">
+						<a href="images/appendix/task_range.webp" target="_blank" rel="noopener"><img src="images/appendix/task_range.webp" width="2400" height="1258" decoding="async" alt="Ten initial object placements used in the real-world evaluation of each of the seven tasks"></a>
+						<figcaption><b>Fig. 9.</b> Real-world evaluation range. For each task, we evaluate object poses within a local perturbation range to assess the robustness of the learned sim-to-real policies.</figcaption>
+					</figure>
+
+					<h4 id="app-e-5"><span class="n">E.5</span> Complete Real-World Evaluation Results</h4>
+					<p>In this section, we report real-world task success rates for the <i>Pure-RL (finger)</i>, <i>Pure-RL (arm+finger)</i>, and <i>Pure-IL</i> baselines across the same seven manipulation tasks. To reduce hardware wear, each baseline is evaluated over 5 trials, using a subset of the 10 trials used in Sec.&nbsp;IV-C of the main paper for our method and the <i>FoundationPose</i> baseline.</p>
+
+					<figure class="paper-table" id="tab-11">
+						<figcaption><b>Table XI.</b> Real-world task success rate of baseline methods under five object pose variations.</figcaption>
+						<div class="table-scroll">
+							<table>
+								<thead>
+									<tr><th class="l" scope="col">Method</th><th scope="col">Apple</th><th scope="col">Peach</th><th scope="col">Steak</th><th scope="col">Toy</th><th scope="col">Tissue</th><th scope="col">Book</th><th scope="col">Tray</th><th scope="col">Avg.</th></tr>
+								</thead>
+								<tbody>
+									<tr><th scope="row"><i>Pure-IL</i></th><td>0/5</td><td>0/5</td><td>0/5</td><td>0/5</td><td>2/5</td><td>0/5</td><td>0/5</td><td>5.7%</td></tr>
+									<tr><th scope="row"><i>Pure-RL (finger)</i></th><td>0/5</td><td>1/5</td><td>0/5</td><td>0/5</td><td>5/5</td><td>5/5</td><td>5/5</td><td>45.7%</td></tr>
+									<tr><th scope="row"><i>Pure-RL (arm+finger)</i></th><td>0/5</td><td>0/5</td><td>0/5</td><td>0/5</td><td>0/4</td><td>1/4</td><td>0/5</td><td>3.0%</td></tr>
+									<tr class="ours"><th scope="row">Ours</th><td>10/10</td><td>9/10</td><td>10/10</td><td>8/10</td><td>10/10</td><td>10/10</td><td>10/10</td><td><b>95.7%</b></td></tr>
+								</tbody>
+							</table>
+						</div>
+					</figure>
+
+					<p>Compared with the baseline results in <a class="xref" href="#tab-11">Table&nbsp;XI</a>, our method achieves an average task success rate of 95.7% in Table&nbsp;II of the main paper, clearly outperforming all baselines in real-world rollouts. The failure modes of the baselines are as follows:</p>
+					<p>
+						<b>Failure modes of pure IL (DP3).</b>
+						DP3 performed poorly in the real-world experiments, with only 2/35 successful trials. In general, DP3 often produced jerky trajectories, and some trials showed unsafe behavior like hitting table.
+					</p>
+					<p>One clear failure mode is the sim-to-real discrepancy in point-cloud observations. Unlike our method, which performs distillation only once before the robot enters the workspace, the DP3 baseline continuously takes point clouds as input during execution. This makes it more susceptible to the sim-to-real gap caused by severe hand-object occlusions during manipulation.</p>
+					<p>For the grasping tasks, the main issue was loose grasping. The hand often touched the object but did not hold it firmly, so the object slipped or barely moved.</p>
+					<p>For the book task, the failure may also be related to the book's weight and friction. The policy predicted relatively small actions, which were not enough to move the book effectively. As a result, the robot made little progress, and the rollout eventually failed.</p>
+					<p>Overall, these results show that pure IL with DP3 is sensitive to real-world perception discrepancy, unstable contact, and weak grasping. This makes it difficult to deploy safely and reliably without additional robustness mechanisms.</p>
+					<p>
+						<b>Failure modes of pure RL with finger-only.</b>
+						Pure RL with finger-only control achieved 16/35 successful real-world trials. It performed well on the tray, tissue-box, and book tasks, achieving 5/5 success on each. However, it failed on most grasping tasks, including apple, toy, and spice bottle, and only succeeded once on peach.
+					</p>
+					<p>For grasping tasks, the dominant failure mode was loose or missed grasping. This was especially clear for the apple and spice bottle tasks, where the robot sometimes failed to make enough contact with the object. For the toy task, the robot usually made contact, but the applied force was not strong or stable enough to lift the object successfully.</p>
+					<p>These failures occurred even when the objects were placed at their original poses. This suggests that the finger-only policy had limited robustness to contact variation and could not reliably form a strong grasp. The problem became more difficult when the objects were placed in different poses, because the arm followed fixed optimized trajectories generated for the original object poses. The only successful peach trial occurred at the original pose, further showing that the policy was sensitive to object placement.</p>
+					<p>Overall, pure RL with finger-only control can work well when the arm trajectory is already suitable and the task does not require robust grasping. However, for grasping tasks, it is sensitive to object-pose variation and insufficient finger force.</p>
+					<p>
+						<b>Failure modes of pure RL with arm and finger.</b>
+						Pure RL with arm and finger control performed poorly in the real-world experiments, achieving only 1/33 successful trials. It failed on all apple, peach, toy, spice-bottle, tray, and tissue-box trials, and only achieved one success on the book task.
+					</p>
+					<p>The main failure mode was unsafe and jerky arm motion. Since the policy directly controlled both the arm and the fingers, the generated actions were often unstable in the real world. In several trials, the robot moved abruptly, hit the table, or collided with nearby objects, so the rollouts had to be stopped for safety. During the tissue-box experiments, the middle-finger MCP link broke in the fourth trial, further showing the risk of deploying this policy directly on hardware.</p>
+					<p>For grasping tasks, the grasp was also often too loose. The robot sometimes reached the object but failed to form a stable grasp, causing the object to slip or barely move. Compared with the finger-only policy, adding arm actions did not improve real-world robustness. Instead, it introduced larger motion errors, jerkier trajectories, and more unsafe behavior.</p>
+					<p>Overall, pure RL with arm and finger control was difficult to deploy safely in the real world. The policy was sensitive to sim-to-real errors in both arm motion and contact, leading to jerky trajectories, weak grasping, and frequent safety stops.</p>
+					<p>Furthermore, for each baseline, we include real-world rollout images in <a class="xref" href="#fig-10">Fig.&nbsp;10</a> to demonstrate the discussed failure modes.</p>
+
+					<figure class="paper-fig" id="fig-10">
+						<a href="images/appendix/baseline_failure.webp" target="_blank" rel="noopener"><img src="images/appendix/baseline_failure.webp" width="2400" height="1496" decoding="async" alt="Real-world failure snapshots of the FoundationPose, DP3, Pure RL finger-only and Pure RL arm+finger baselines, grouped by failure mode"></a>
+						<figcaption><b>Fig. 10.</b> We show two dominant failure modes of the four sim-to-real baseline methods: misaligned contact poses and insufficient grasping force.</figcaption>
+					</figure>
+
+					<h4 id="app-e-6"><span class="n">E.6</span> Ablation of Sim-to-Real Policies</h4>
+					<p>In this section, we ablate the importance of both sim-to-real policies for achieving reliable real-world transfer. Specifically, we evaluate variants using either only the distillation policy or only the residual RL finger policy on three representative tasks: <b>Peach Preparation</b>, <b>Toy Rearrangement</b>, and <b>Tissue Box</b>, over 5 trials with object pose variations.</p>
+
+					<figure class="paper-table" id="tab-12">
+						<figcaption><b>Table XII.</b> Real-world task success rates of ablated sim-to-real policies under five object pose variations. <i>With Both</i> denotes our proposed decoupled policy, whose results are the same as those reported in Table&nbsp;II of the main paper.</figcaption>
+						<div class="table-scroll">
+							<table>
+								<thead>
+									<tr><th class="l" scope="col">Method</th><th scope="col">Peach</th><th scope="col">Toy</th><th scope="col">Tissue</th><th scope="col">Avg.</th></tr>
+								</thead>
+								<tbody>
+									<tr><th scope="row"><i>Distillation-only</i></th><td>0/5</td><td>0/5</td><td>5/5</td><td>33.3%</td></tr>
+									<tr><th scope="row"><i>Residual-only</i></th><td>2/5</td><td>2/5</td><td>5/5</td><td>60.0%</td></tr>
+									<tr class="ours"><th scope="row"><i>With Both</i></th><td>9/10</td><td>8/10</td><td>10/10</td><td><b>90.0%</b></td></tr>
+								</tbody>
+							</table>
+						</div>
+					</figure>
+
+					<p>From the results reported in <a class="xref" href="#tab-12">Table&nbsp;XII</a>, we observe that using either the distillation policy or the residual RL policy alone does not achieve the desired performance. The Tissue Box task is an exception, where either component alone can still yield good results. This may be because the task is more tolerant to slight positional errors, as the tissue box is relatively large. However, we also observe that without the distillation policy, mismatches in the pushing pose can lead to larger final pose errors.</p>
+				</section>
+
+				<!-- ---------------- APPENDIX F: TIME-COST BREAKDOWN ---------------- -->
+				<section id="appendix-f">
+					<h3><span class="app-label">Appendix F</span> Time-Cost Breakdown</h3>
+					<p>In this section, we show the detailed time-cost breakdown for the seven tasks. The time costs reported in <a class="xref" href="#tab-13">Table&nbsp;XIII</a> indicate that our overall pipeline is sufficiently efficient. Moreover, because the refined simulation trajectories are high quality, the subsequent sim-to-real policies can also be learned efficiently.</p>
+
+					<figure class="paper-table" id="tab-13">
+						<figcaption><b>Table XIII.</b> Time-cost breakdown for seven tasks. We report the time required by each module for each task.</figcaption>
+						<div class="table-scroll">
+							<table>
+								<thead>
+									<tr><th class="l" scope="col">Module</th><th scope="col">Apple</th><th scope="col">Peach</th><th scope="col">Steak</th><th scope="col">Toy</th><th scope="col">Tissue</th><th scope="col">Book</th><th scope="col">Tray</th></tr>
+								</thead>
+								<tbody>
+									<tr><th scope="row">Digital-twin reconstruction</th><td>1m 49s</td><td>1m 33s</td><td>1m 07s</td><td>1m 26s</td><td>1m 06s</td><td>1m 04s</td><td>1m 00s</td></tr>
+									<tr><th scope="row">Robot motion retargeting</th><td>1m 57s</td><td>1m 56s</td><td>1m 56s</td><td>1m 51s</td><td>1m 55s</td><td>1m 58s</td><td>1m 57s</td></tr>
+									<tr><th scope="row">Object motion extraction</th><td>11s</td><td>10s</td><td>11s</td><td>10s</td><td>7s</td><td>8s</td><td>8s</td></tr>
+									<tr><th scope="row">Keyframe detection</th><td>5s</td><td>5s</td><td>5s</td><td>5s</td><td>5s</td><td>5s</td><td>5s</td></tr>
+									<tr><th scope="row">Keyframe refinement</th><td>10m 21s</td><td>8m 45s</td><td>13m 50s</td><td>58m 41s</td><td>27s</td><td>25s</td><td>26s</td></tr>
+									<tr><th scope="row">Trajectory interpolation</th><td>33s</td><td>2m 03s</td><td>40s</td><td>1m 16s</td><td>3s</td><td>3s</td><td>3s</td></tr>
+									<tr><th scope="row">IL policy training</th><td>45m 40s</td><td>48m 30s</td><td>54m 54s</td><td>51m 07s</td><td>12m 31s</td><td>9m 51s</td><td>8m 05s</td></tr>
+									<tr><th scope="row">Residual RL training (A40)</th><td>55m 1s</td><td>28m 30s</td><td>149m 48s</td><td>269m 42s</td><td>4m 3s</td><td>13m 30s</td><td>68m 6s</td></tr>
+									<tr class="ours"><th scope="row">Total</th><td>1h 55m 37s</td><td>1h 31m 32s</td><td>3h 42m 31s</td><td>6h 24m 18s</td><td>20m 17s</td><td>27m 04s</td><td>1h 19m 50s</td></tr>
+								</tbody>
+							</table>
+						</div>
+					</figure>
+
+					<p>Additionally, Toy Rearrangement is the most time-consuming task, requiring significantly more time for both keyframe optimization and residual RL policy learning. This is reasonable because optimizing a reliable grasping configuration for such a tiny object is more challenging, and learning a robust policy under domain randomization also requires more simulation interactions.</p>
+				</section>
+
+				<!-- ----------- APPENDIX G: SPATIAL GENERALIZATION RESULTS ----------- -->
+				<section id="appendix-g">
+					<h3><span class="app-label">Appendix G</span> Spatial Generalization Results</h3>
+					<p>To further evaluate the effectiveness of collision avoidance, we collect seven additional human videos for each task with several obstacles in the scene. For each video, we reconstruct the digital twin and perform keyframe-based trajectory optimization. The spatial generalization module then takes the reconstructed scene and optimized trajectory as inputs to generate new collision-aware robot trajectories in the cluttered scene.</p>
+
+					<h4 id="app-g-1"><span class="n">G.1</span> Cluttered Environment and Scene Reconstruction</h4>
+					<p>We first show the reference scene image and the corresponding reconstructed digital twin in <a class="xref" href="#fig-11">Fig.&nbsp;11</a>. The results demonstrate that the digital-twin reconstruction preserves the geometry of real-world objects well, including both manipulated objects and surrounding obstacles, without requiring pre-existing object models or prior object information.</p>
+
+					<figure class="paper-fig" id="fig-11">
+						<a href="images/appendix/obstacle_recons.webp" target="_blank" rel="noopener"><img src="images/appendix/obstacle_recons.webp" width="2400" height="630" decoding="async" alt="Real-world reference images of seven cluttered scenes and the digital twins reconstructed from them"></a>
+						<figcaption><b>Fig. 11.</b> The reference scene images and the corresponding reconstructed digital twin. For each task, only one or two objects are involved in manipulation and trajectory refinement. The other objects serve as obstacles to evaluate whether the generalization module can generate collision-free trajectories for novel task configurations.</figcaption>
+					</figure>
+
+					<h4 id="app-g-2"><span class="n">G.2</span> Generated Trajectories and Simulation Evaluation</h4>
+					<p>Given the reconstructed digital-twin simulator and the refined trajectory via the keyframe adjustments, the spatial generalization module first samples new poses for the manipulated and target objects. It then uses CuRobo to generate collision-free robot trajectories, with the keyframe robot poses specified as waypoints.</p>
+					<p>In <a class="xref" href="#fig-12">Fig.&nbsp;12</a>, we present two simulation rollouts for each of the five manipulation tasks, where the poses of the manipulated and target objects are clearly different from those in the human manipulation videos. For the other two tasks, Apple Preparation and Toy Rearrangement, we observe that the trajectories generated by the spatial module do not directly lead to successful replay in simulation. We conjecture that this is due to the waypoint pose tolerance in CuRobo: even slight planning errors, e.g., around 2 cm at the waypoint pose, can cause task failure. This suggests that for more precise manipulation tasks, policy learning is still needed to make trajectory tracking robust under spatial generalization, similar to its role in sim-to-real transfer.</p>
+
+					<figure class="paper-fig" id="fig-12">
+						<a href="images/appendix/MP_result.webp" target="_blank" rel="noopener"><img src="images/appendix/MP_result.webp" width="2400" height="1240" decoding="async" alt="Two simulated generalization rollouts, as four frames over time, for each of the peach, steak, tissue, book and tray tasks"></a>
+						<figcaption><b>Fig. 12.</b> We present two simulation rollouts for each of the five manipulation tasks, where the poses of the manipulated and target objects are clearly different from those in the human manipulation videos.</figcaption>
+					</figure>
+				</section>
+
+				<!-- ---------------------- APPENDIX REFERENCES ---------------------- -->
+				<!-- Works cited in the appendix, numbered in order of first appearance. -->
+				<section id="appendix-references">
+					<h3><span class="app-label">Appendix</span> References</h3>
+					<ol class="ref-list">
+						<li id="ref-1">Gemini Team, &ldquo;Gemini 1.5: Unlocking multimodal understanding across millions of tokens of context,&rdquo; <i>arXiv preprint arXiv:2403.05530</i>, 2024.</li>
+						<li id="ref-2">G. Pavlakos, D. Shan, I. Radosavovic, A. Kanazawa, D. Fouhey, and J. Malik, &ldquo;Reconstructing hands in 3D with transformers,&rdquo; in <i>Proc. IEEE/CVF Conf. Computer Vision and Pattern Recognition (CVPR)</i>, 2024, pp. 9826&ndash;9836.</li>
+						<li id="ref-3">K. Zakka, &ldquo;Mink: Python inverse kinematics based on MuJoCo,&rdquo; 2025. [Online]. Available: <a href="https://github.com/kevinzakka/mink" target="_blank" rel="noopener">https://github.com/kevinzakka/mink</a></li>
+						<li id="ref-4">N. Karaev, I. Rocco, B. Graham, N. Neverova, A. Vedaldi, and C. Rupprecht, &ldquo;CoTracker: It is better to track together,&rdquo; <i>arXiv preprint arXiv:2307.07635</i>, 2023.</li>
+						<li id="ref-5">Z.-H. Yin and P. Abbeel, &ldquo;Lightning Grasp: High performance procedural grasp synthesis with contact fields,&rdquo; <i>arXiv preprint arXiv:2511.07418</i>, 2025.</li>
+						<li id="ref-6">B. Sundaralingam, S. K. S. Hari, A. Fishman, C. Garrett, K. Van Wyk, V. Blukis, A. Millane, H. Oleynikova, A. Handa, F. Ramos, <i>et al.</i>, &ldquo;cuRobo: Parallelized collision-free minimum-jerk robot motion generation,&rdquo; <i>arXiv preprint arXiv:2310.17274</i>, 2023.</li>
+						<li id="ref-7">J. Tobin, R. Fong, A. Ray, J. Schneider, W. Zaremba, and P. Abbeel, &ldquo;Domain randomization for transferring deep neural networks from simulation to the real world,&rdquo; in <i>Proc. IEEE/RSJ Int. Conf. Intelligent Robots and Systems (IROS)</i>, 2017, pp. 23&ndash;30.</li>
+						<li id="ref-8">B. Wen, W. Yang, J. Kautz, and S. Birchfield, &ldquo;FoundationPose: Unified 6D pose estimation and tracking of novel objects,&rdquo; in <i>Proc. IEEE/CVF Conf. Computer Vision and Pattern Recognition (CVPR)</i>, 2024, pp. 17868&ndash;17879.</li>
+						<li id="ref-9">Y. Chen, C. Wang, Y. Yang, and C. K. Liu, &ldquo;Object-centric dexterous manipulation from human motion data,&rdquo; <i>arXiv preprint arXiv:2411.04005</i>, 2024.</li>
+						<li id="ref-10">I. Guzey, Y. Dai, G. Savva, R. Bhirangi, and L. Pinto, &ldquo;Bridging the human to robot dexterity gap through object-oriented rewards,&rdquo; in <i>Proc. IEEE Int. Conf. Robotics and Automation (ICRA)</i>, 2025, pp. 3344&ndash;3351.</li>
+						<li id="ref-11">Z. Chen, S. Chen, E. Arlaud, I. Laptev, and C. Schmid, &ldquo;ViViDex: Learning vision-based dexterous manipulation from human videos,&rdquo; in <i>Proc. IEEE Int. Conf. Robotics and Automation (ICRA)</i>, 2025, pp. 3336&ndash;3343.</li>
+						<li id="ref-12">X. B. Peng, P. Abbeel, S. Levine, and M. Van de Panne, &ldquo;DeepMimic: Example-guided deep reinforcement learning of physics-based character skills,&rdquo; <i>ACM Transactions on Graphics (TOG)</i>, vol. 37, no. 4, pp. 1&ndash;14, 2018.</li>
+						<li id="ref-13">L. Yang, X. Huang, Z. Wu, A. Kanazawa, P. Abbeel, C. Sferrazza, C. K. Liu, R. Duan, and G. Shi, &ldquo;OmniRetarget: Interaction-preserving data generation for humanoid whole-body loco-manipulation and scene interaction,&rdquo; <i>arXiv preprint arXiv:2509.26633</i>, 2025.</li>
+						<li id="ref-14">T. G. W. Lum, O. Y. Lee, C. K. Liu, and J. Bohg, &ldquo;Crossing the human-robot embodiment gap with sim-to-real RL using one human demonstration,&rdquo; <i>arXiv preprint arXiv:2504.12609</i>, 2025.</li>
+						<li id="ref-15">P. Dan, K. Kedia, A. Chao, E. W. Duan, M. A. Pace, W.-C. Ma, and S. Choudhury, &ldquo;X-Sim: Cross-embodiment learning via real-to-sim-to-real,&rdquo; <i>arXiv preprint arXiv:2505.07096</i>, 2025.</li>
+						<li id="ref-16">J. Mu, S. Yang, Y. Bao, H. Bae, T. Wei, L. Xu, B. Li, H. Xu, and J. Pang, &ldquo;DexImit: Learning bimanual dexterous manipulation from monocular human videos,&rdquo; <i>arXiv preprint arXiv:2602.10105</i>, 2026.</li>
+						<li id="ref-17">Y. Ze, G. Zhang, K. Zhang, C. Hu, M. Wang, and H. Xu, &ldquo;3D Diffusion Policy: Generalizable visuomotor policy learning via simple 3D representations,&rdquo; <i>arXiv preprint arXiv:2403.03954</i>, 2024.</li>
+					</ol>
+				</section>
+			</section>
+
 		</div>
 
 		<!-- Template attribution (HTML5 UP, CCA 3.0). Reveals no author info. -->
@@ -343,6 +1821,8 @@
 			Built with the <a href="https://html5up.net/strata">HTML5 UP &ldquo;Strata&rdquo;</a> template.
 		</footer>
 	</main>
+
+	</div><!-- /.page -->
 
 	<!-- Template scripts (jQuery + skel responsive framework + helpers). -->
 	<!-- Google Analytics and the empty dp3.js were intentionally removed.  -->
@@ -395,6 +1875,135 @@
 					});
 				}, { threshold: 0.3 });
 				document.querySelectorAll('.inview-autoplay').forEach(function (w) { io.observe(w); });
+			}
+		})();
+	</script>
+
+	<!-- Appendix math: KaTeX turns the LaTeX between \( \) and \[ \] into typeset formulas. -->
+	<script src="assets/katex/katex.min.js"></script>
+	<script src="assets/katex/auto-render.min.js"></script>
+	<script>
+		(function () {
+			var appendix = document.getElementById('appendix');
+			if (!appendix || typeof renderMathInElement !== 'function') return;
+			renderMathInElement(appendix, {
+				delimiters: [
+					{ left: '\\[', right: '\\]', display: true },
+					{ left: '\\(', right: '\\)', display: false }
+				],
+				throwOnError: false
+			});
+		})();
+	</script>
+
+	<!-- Side menu: highlight the section being read, unfold its sub-sections, and run the -->
+	<!-- drawer on small screens. It reads the menu's own links, so there is nothing to     -->
+	<!-- keep in sync here when sections are added or renamed.                             -->
+	<script>
+		(function () {
+			var nav = document.getElementById('side-nav');
+			if (!nav) return;
+			var here = document.getElementById('top-bar-here');
+			var toggle = document.querySelector('.nav-toggle');
+			var backdrop = document.querySelector('.nav-backdrop');
+
+			// Menu entries, in page order: { link, el (the section it points at) }.
+			var items = [];
+			nav.querySelectorAll('a[href^="#"]').forEach(function (a) {
+				if (a.hasAttribute('data-nospy')) return;
+				var el = document.getElementById(decodeURIComponent(a.getAttribute('href').slice(1)));
+				if (el) items.push({ link: a, el: el });
+			});
+			if (!items.length) return;
+
+			var current = null;
+			function setActive(item) {
+				if (item === current) return;
+				current = item;
+				nav.querySelectorAll('.is-active, .is-open, .is-trail').forEach(function (n) {
+					n.classList.remove('is-active', 'is-open', 'is-trail');
+					n.removeAttribute('aria-current');
+				});
+				item.link.classList.add('is-active');
+				item.link.setAttribute('aria-current', 'location');
+				// Open every enclosing <li>, so the active appendix shows its sub-sections.
+				for (var li = item.link.closest('li'); li && nav.contains(li); li = li.parentElement.closest('li')) {
+					li.classList.add('is-open', 'is-trail');
+				}
+				if (here) here.textContent = item.el.id === 'top' ? '' : item.link.textContent;
+				// Keep the highlighted entry in view inside the (independently scrolling) menu.
+				var r = item.link.getBoundingClientRect(), box = nav.getBoundingClientRect();
+				if (r.top < box.top + 70) nav.scrollTop -= box.top + 70 - r.top;
+				else if (r.bottom > box.bottom - 50) nav.scrollTop += r.bottom - (box.bottom - 50);
+			}
+
+			// The active section is the last one whose top has passed a line near the top of the
+			// window. After a menu click the clicked entry stays active (even if a sub-heading
+			// sits right below it) until the visitor scrolls away from it.
+			var lock = null, lockMoving = false, settle = null, ticking = false;
+			function update() {
+				var line = Math.max(100, window.innerHeight * 0.25), cur = items[0], i, top;
+				for (i = 0; i < items.length; i++) {
+					if (items[i].el.getBoundingClientRect().top <= line) cur = items[i];
+				}
+				var doc = document.documentElement;
+				var atEnd = window.innerHeight + window.pageYOffset >= doc.scrollHeight - 4;
+				if (atEnd) cur = items[items.length - 1];
+				if (lock) {
+					top = lock.el.getBoundingClientRect().top;
+					if (lockMoving || atEnd || (top > -8 && top <= line)) cur = lock;
+					else lock = null;
+				}
+				setActive(cur);
+			}
+			function armSettle() {
+				clearTimeout(settle);
+				settle = setTimeout(function () { lockMoving = false; update(); }, 180);
+			}
+			window.addEventListener('scroll', function () {
+				if (lockMoving) armSettle();
+				if (ticking) return;
+				ticking = true;
+				requestAnimationFrame(function () { ticking = false; update(); });
+			}, { passive: true });
+			window.addEventListener('resize', update);
+			window.addEventListener('load', update);
+
+			// Drawer (small screens only; on wide screens these controls are hidden).
+			function setOpen(open) {
+				document.body.classList.toggle('nav-open', open);
+				if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+			}
+			if (toggle) toggle.addEventListener('click', function () { setOpen(!document.body.classList.contains('nav-open')); });
+			if (backdrop) backdrop.addEventListener('click', function () { setOpen(false); });
+			document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setOpen(false); });
+
+			nav.addEventListener('click', function (e) {
+				var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+				if (!a) return;
+				setOpen(false);
+				for (var i = 0; i < items.length; i++) {
+					if (items[i].link === a) { lock = items[i]; lockMoving = true; setActive(lock); armSettle(); break; }
+				}
+			});
+
+			update();
+
+			// Deep links (e.g. .../#appendix-d): the page keeps growing while fonts and math load,
+			// so re-align to the requested anchor until the visitor starts scrolling themselves.
+			if (location.hash.length > 1) {
+				var moved = false;
+				['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (ev) {
+					window.addEventListener(ev, function () { moved = true; }, { passive: true, once: true });
+				});
+				var realign = function () {
+					if (moved) return;
+					var el = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+					if (el) { el.scrollIntoView({ behavior: 'instant', block: 'start' }); update(); }
+				};
+				realign();
+				window.addEventListener('load', realign);
+				if (document.fonts && document.fonts.ready) document.fonts.ready.then(realign);
 			}
 		})();
 	</script>
