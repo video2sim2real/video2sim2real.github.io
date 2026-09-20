@@ -557,7 +557,9 @@
 
 				<!-- Pipeline / architecture figure. Replace the placeholder with images/pipeline.png. -->
 				<figure>
-					<span class="image fit"><img src="images/pipeline.png" alt="Pipeline overview"></span>
+					<!-- width/height = the PNG's pixel size: they reserve the figure's box while it downloads, so -->
+					<!-- the page doesn't jump. (Update them if you swap in a figure with another aspect ratio.)  -->
+					<span class="image fit"><img src="images/pipeline.png" alt="Pipeline overview" width="3200" height="1183" style="height: auto;"></span>
 					<figcaption class="caption">Pipeline &mdash; estimation, refinement, and sim-to-real transfer (spatial generalization as an add-on option).</figcaption>
 				</figure>
 			</section>
