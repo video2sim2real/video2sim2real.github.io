@@ -1,0 +1,77 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Stand-alone build of the paper's appendix  ->  appendix.pdf on the project page.
+%
+% Do not compile this by hand: tools/build_appendix_pdf.py copies it into a scratch copy
+% of paper_overleaf/ and fills in the @@...@@ placeholders (the appendix \input list is
+% read from main.tex; the counter offsets come from compiling the full paper).
+%
+% The preamble mirrors main.tex, so the appendix looks exactly as it does in the paper.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[letterpaper, 10pt, conference]{ieeeconf}
+
+% The paper is written for pdfLaTeX (Overleaf); this file is compiled with Tectonic (XeTeX).
+% XeTeX defaults to Unicode fonts, for which the paper's `times' package has nothing -- every
+% bold / italic / small-caps / typewriter request would silently fall back to upright Latin
+% Modern. Selecting pdfLaTeX's classic encoding gives the very same Times fonts as the paper.
+\usepackage[OT1]{fontenc}
+% ...and, as pdfLaTeX's inputenc does, turn characters typed as Unicode into LaTeX commands;
+% the classic fonts have no slot for them, so XeTeX would drop them without a word.
+% (The build script fails on any "Missing character" in the log, should a new one turn up.)
+\usepackage{newunicodechar}
+\newunicodechar{—}{\textemdash}
+\newunicodechar{–}{\textendash}
+\newunicodechar{‘}{`}
+\newunicodechar{’}{'}
+\newunicodechar{“}{``}
+\newunicodechar{”}{''}
+\newunicodechar{…}{\dots}
+\newunicodechar{×}{\ensuremath{\times}}
+\newunicodechar{±}{\ensuremath{\pm}}
+\newunicodechar{°}{\ensuremath{^\circ}}
+\newunicodechar{≈}{\ensuremath{\approx}}
+\newunicodechar{ }{~}   % U+00A0 no-break space
+\usepackage{flushend}    % balance the two columns of the last page
+% ieeeconf lets two-column floats fill a whole page (\dbltopfraction = 1); the four per-task tables
+% then leave room for a single stranded line of text beneath them. Keep some text on such pages.
+\renewcommand{\dbltopfraction}{0.8}
+
+\IEEEoverridecommandlockouts
+\overrideIEEEmargins
+\usepackage{xr}          % numbers of the MAIN paper's tables/sections, imported as "M-<label>"
+\usepackage{hyperref}
+\input{setup/packages}
+\input{setup/macros}
+
+\externaldocument[M-]{main}
+\hypersetup{pdftitle={Video2Sim2Real: Appendix}, pdfauthor={Anonymous Authors}}
+
+\title{\LARGE \bf
+Video2Sim2Real: Full-Stack Self-Sufficient Dexterous Skill Acquisition from a Single Human Video\\[0.6em]
+\Large Appendix
+}
+\author{Anonymous Authors}   % double-blind: never put real names here
+
+\begin{document}
+
+\maketitle
+\thispagestyle{plain}
+\pagestyle{plain}
+
+\noindent\textit{This document is the appendix of the paper named above. Its sections
+(Appendices A--G) and the numbering of its figures, tables and equations continue from the
+main paper, where Figs.~1--@@FIGURES@@ and Tables~I--@@TABLES_ROMAN@@ appear. The works
+cited here are listed at the end of this document.}
+
+% Continue the main paper's numbering.
+\setcounter{figure}{@@FIGURES@@}
+\setcounter{table}{@@TABLES@@}
+\setcounter{equation}{@@EQUATIONS@@}
+
+\useRomanappendicesfalse
+\appendices
+@@APPENDIX_INPUTS@@
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
