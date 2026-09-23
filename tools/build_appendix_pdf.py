@@ -2,6 +2,7 @@
 """Build appendix.pdf (the download on the project page) from the Overleaf source.
 
     python3 tools/build_appendix_pdf.py
+    KEEP_BUILD=1 python3 tools/build_appendix_pdf.py   # keeps the scratch build (logs, .aux) for debugging
 
 Needs:  brew install tectonic mupdf-tools
 Reads:  paper_overleaf/   (git-ignored: it holds the de-anonymised source -- never commit it)
@@ -19,6 +20,7 @@ What it does, all inside a throw-away copy (paper_overleaf/ itself is never modi
   5. refuses to publish if the PDF contains "??", dropped characters, or any author /
      affiliation name from main.tex
 """
+import os
 import re
 import shutil
 import subprocess
@@ -173,7 +175,10 @@ def main():
             print(f"Updated the note in index.html -> {pages} pages, {size}")
     else:
         print("(index.html has no <!--pdf-info--> marker; page count / size note not updated)")
-    shutil.rmtree(build, ignore_errors=True)
+    if os.environ.get("KEEP_BUILD"):
+        print(f"(KEEP_BUILD set: build directory kept at {build})")
+    else:
+        shutil.rmtree(build, ignore_errors=True)
 
 
 if __name__ == "__main__":

@@ -66,7 +66,9 @@ works in a throw-away copy. What you get is a stand-alone, anonymous PDF:
 - **numbering continues from the main paper** (the script compiles the full paper once to find
   where its figures/tables/equations stop — currently the appendix starts at Fig. 5, Table III),
   and references into the main paper read "Table II of the main paper";
-- its own reference list, PDF bookmarks, page numbers;
+- its own reference list, PDF bookmarks, page numbers, and clickable links (figure/table/equation
+  references and citation numbers, coloured blue). Note `ieeeconf.cls` deliberately disables
+  hyperref's citation links (its fake `\NAT@parse`); the wrapper undoes that, as the class suggests;
 - a few typos in the source are patched on the fly (the `FIXES` list at the top of the script —
   fix them on Overleaf and the entries simply stop matching).
 

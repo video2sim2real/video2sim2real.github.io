@@ -37,13 +37,26 @@
 
 \IEEEoverridecommandlockouts
 \overrideIEEEmargins
+
+% ieeeconf.cls defines a fake natbib command (\NAT@parse) so that hyperref keeps its hands off
+% the cite package -- and, as the class itself notes, "as a result citation numbers will not be
+% hyperlinked" (true of the paper on Overleaf too). Today's cite.sty cooperates with hyperref, so
+% undo the trick, as the class suggests: every "[n]" then links to its entry in the reference
+% list, and cite's "[9]-[11]" ranges are unaffected. Must come before hyperref is loaded.
+\makeatletter\let\NAT@parse\undefined\makeatother
+
 \usepackage{xr}          % numbers of the MAIN paper's tables/sections, imported as "M-<label>"
 \usepackage{hyperref}
 \input{setup/packages}
 \input{setup/macros}
 
 \externaldocument[M-]{main}
-\hypersetup{pdftitle={Video2Sim2Real: Appendix}, pdfauthor={Anonymous Authors}}
+% Coloured link text instead of hyperref's default boxes: the boxes are drawn by some viewers
+% (Acrobat, Firefox, Overleaf) but not by others (Chrome, macOS Preview), where links then look
+% like plain text. The colour is the accent blue of the project page.
+\definecolor{linkblue}{RGB}{43,108,176}
+\hypersetup{pdftitle={Video2Sim2Real: Appendix}, pdfauthor={Anonymous Authors},
+            colorlinks=true, linkcolor=linkblue, citecolor=linkblue, urlcolor=linkblue}
 
 \title{\LARGE \bf
 Video2Sim2Real: Full-Stack Self-Sufficient Dexterous Skill Acquisition from a Single Human Video\\[0.6em]
